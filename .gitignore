@@ -38,3 +38,5 @@ Android/
 iOSDevice64/
 OSX64/
 Linux64/
+tests/dunitx-results.xml
+tests/gsJsonTestResults.json
