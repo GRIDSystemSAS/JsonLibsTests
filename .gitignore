@@ -1,0 +1,40 @@
+# Delphi compiled units
+*.dcu
+*.dcp
+*.drc
+*.dcpil
+*.dex
+
+# Binaries
+*.exe
+*.dll
+*.bpl
+*.so
+*.dylib
+*.o
+
+# Delphi IDE directories
+__history/
+__recovery/
+
+# local files
+*.local
+
+# IDE configuration file
+*.identcache
+*.dproj.local
+*.groupproj.local
+*.deployproj.local
+*.stat
+*.tvsconfig
+
+
+# Output directories
+Win32/
+Win64/
+Debug/
+Release/
+Android/
+iOSDevice64/
+OSX64/
+Linux64/

@@ -1,0 +1,23 @@
+# Document level comment
+# Another document comment
+name: John Doe  # Person's full name
+age: 30        # Age in years
+
+# Address information follows
+address:
+  street: 123 Main St    # Street address
+  city: Springfield      # City name
+  # State and postal code
+  state: IL
+  zip: 62701
+
+# List of hobbies
+hobbies:
+  - reading     # Loves books
+  - swimming    # Good exercise
+  - cooking     # Creative outlet
+
+# Contact methods
+contact:
+  email: john@example.com
+  phone: 555-1234

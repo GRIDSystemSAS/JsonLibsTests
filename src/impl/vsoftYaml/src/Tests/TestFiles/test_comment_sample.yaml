@@ -1,0 +1,31 @@
+# Sample configuration file
+# This demonstrates comment preservation
+application:
+  name: Test App        # Application name
+  version: 1.2.3        # Semantic version
+  debug: true           # Enable debug mode
+
+# Database configuration section
+database:
+  host: localhost       # Database server
+  port: 5432           # Connection port
+  name: testdb         # Database name
+
+# List of enabled features
+features:
+  - authentication     # User login system
+  - logging           # Application logging
+  - caching           # Data caching
+
+# Server configuration
+server:
+#out of place
+  # comments
+  # Network settings
+  network:
+    host: 0.0.0.0      # Bind address
+    port: 8080         # Listen port
+  # Security settings  
+  security:
+    ssl: false         # Enable SSL
+    cert: ""          # Certificate path

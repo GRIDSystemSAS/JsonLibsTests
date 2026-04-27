@@ -1,0 +1,147 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Import Condition="Exists('$(BDS)\bin\CodeGear.Deployment.targets')" Project="$(BDS)\bin\CodeGear.Deployment.targets"/>
+    <ProjectExtensions>
+        <ProjectFileVersion>12</ProjectFileVersion>
+    </ProjectExtensions>
+    <PropertyGroup/>
+    <ItemGroup Condition="'$(Platform)'=='OSX64'">
+        <DeployFile Include="TestFiles\test_comment_sample.yaml" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>VSoft.YAML.Tests.app\Contents\Resources\StartUp\</RemoteDir>
+            <RemoteName>test_comment_sample.yaml</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="TestFiles\test_deep_nesting.yaml" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>VSoft.YAML.Tests.app\Contents\Resources\StartUp\</RemoteDir>
+            <RemoteName>test_deep_nesting.yaml</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+    </ItemGroup>
+    <ItemGroup Condition="'$(Platform)'=='Win32'">
+        <DeployFile Include="Win32\Debug\VSoft.YAML.Tests.exe" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>VSoft.YAML.Tests\</RemoteDir>
+            <RemoteName>VSoft.YAML.Tests.exe</RemoteName>
+            <DeployClass>ProjectOutput</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+            <Required>True</Required>
+        </DeployFile>
+        <DeployFile Include="TestFiles\test_comment_sample.yaml" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>VSoft.YAML.Tests\</RemoteDir>
+            <RemoteName>test_comment_sample.yaml</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="TestFiles\test_deep_nesting.yaml" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>VSoft.YAML.Tests\</RemoteDir>
+            <RemoteName>test_deep_nesting.yaml</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+    </ItemGroup>
+    <ItemGroup Condition="'$(Platform)'=='OSXARM64'">
+        <DeployFile Include="TestFiles\test_comment_sample.yaml" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>VSoft.YAML.Tests.app\Contents\Resources\StartUp\</RemoteDir>
+            <RemoteName>test_comment_sample.yaml</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="TestFiles\test_deep_nesting.yaml" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>VSoft.YAML.Tests.app\Contents\Resources\StartUp\</RemoteDir>
+            <RemoteName>test_deep_nesting.yaml</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+    </ItemGroup>
+    <ItemGroup Condition="'$(Platform)'=='Win64'">
+        <DeployFile Include="TestFiles\test_comment_sample.yaml" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>VSoft.YAML.Tests\</RemoteDir>
+            <RemoteName>test_comment_sample.yaml</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="Win64\Debug\VSoft.YAML.Tests.exe" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>VSoft.YAML.Tests\</RemoteDir>
+            <RemoteName>VSoft.YAML.Tests.exe</RemoteName>
+            <DeployClass>ProjectOutput</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+            <Required>True</Required>
+        </DeployFile>
+        <DeployFile Include="TestFiles\test_deep_nesting.yaml" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>VSoft.YAML.Tests\</RemoteDir>
+            <RemoteName>test_deep_nesting.yaml</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+    </ItemGroup>
+    <ItemGroup Condition="'$(Platform)'=='Win64x'"/>
+    <ItemGroup Condition="'$(Platform)'=='Linux64'">
+        <DeployFile Include="TestFiles\test_comment_sample.yaml" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>VSoft.YAML.Tests\</RemoteDir>
+            <RemoteName>test_comment_sample.yaml</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="TestFiles\test_utf8.yaml" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>VSoft.YAML.Tests\</RemoteDir>
+            <RemoteName>test_utf8.yaml</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="Linux64\Debug\VSoft.YAML.Tests" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>VSoft.YAML.Tests\</RemoteDir>
+            <RemoteName>VSoft_YAML_Tests</RemoteName>
+            <DeployClass>ProjectOutput</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+            <Required>True</Required>
+        </DeployFile>
+        <DeployFile Include="TestFiles\test_deep_nesting.yaml" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>VSoft.YAML.Tests\</RemoteDir>
+            <RemoteName>test_deep_nesting.yaml</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+    </ItemGroup>
+</Project>

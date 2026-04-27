@@ -1,0 +1,928 @@
+unit VSoft.YAML.Utils;
+
+interface
+
+{$I 'VSoft.YAML.inc'}
+
+
+uses
+  System.SysUtils,
+  VSoft.YAML.StreamWriter;
+
+type
+  TYAMLDateUtils = class
+    //The RTL implementation is incorrect
+    class function LocalDateToISO8601Str(const date: TDateTime): string;static;
+    class function UTCDateToISO8601Str(const date: TDateTime): string;static;
+
+    class function ISO8601StrToLocalDateTime(const value: string): TDateTime;static;
+    class function ISO8601StrToUTCDateTime(const value: string): TDateTime;static;
+  end;
+
+  // Character classification helper using lookup table for performance
+  TCharClassHelper = record
+  public
+    class function IsWhitespace(ch: Char): Boolean; inline; static;
+    class function IsDigit(ch: Char): Boolean; inline; static;
+    class function IsHexDigit(ch: Char): Boolean; inline; static;
+    class function IsAlpha(ch: Char): Boolean; inline; static;
+    class function IsAlphaNumeric(ch: Char): Boolean; inline; static;
+    class function IsLineBreak(ch: Char): Boolean; inline; static;
+    class function IsIdentifierChar(ch: Char): Boolean; inline; static;
+    class function IsOctalDigit(ch: Char): Boolean; inline; static;
+    class function IsBinaryDigit(ch: Char): Boolean; inline; static;
+    class function IsDigitOrUnderscore(ch: Char): Boolean; inline; static;
+  end;
+
+  TYAMLCharUtils = record
+    class function IsDigit(c : Char) : boolean;static;inline;
+    class function IsDigitOrUnderScore(c : Char) : boolean;static;inline;
+    class function IsAlphaNumeric(C: Char): boolean; inline;static;
+    class function IsAlpha(C: Char): boolean; static;inline;
+    class function IsHexidecimal(c : Char) : boolean;inline;static;
+    class function EscapeStringForJSON(const value : string) : string;overload;static;
+    class procedure EscapeStringForJSON(const value : string; sb : TStringBuilder);overload;static;
+    class procedure EscapeStringForJSONToWriter(const value : string; writer : TYAMLStreamWriter);static;
+    class function SpaceStr(count : integer) : string;static;
+    class function StringOfChar(const c : Char; count : integer) : string;static;
+  end;
+
+  TStringBuilderHelper = class helper for TStringBuilder
+  public
+    procedure Reset;
+  end;
+
+
+{$IFDEF XE5SDOWN}
+function TryStrToUInt64(const S: string; out Value: UInt64): Boolean;
+{$ENDIF}
+
+//only here because of inlining limitations.
+var
+  // Global character classification lookup table
+  CharClassTable: array[Char] of Word;
+
+const
+  // Character classification bit flags
+  CC_WHITESPACE    = $0001;  // Space, Tab
+  CC_DIGIT         = $0002;  // 0-9
+  CC_HEX_DIGIT     = $0004;  // 0-9, A-F, a-f
+  CC_ALPHA         = $0008;  // A-Z, a-z
+  CC_ALPHANUMERIC  = $0010;  // A-Z, a-z, 0-9
+  CC_LINEBREAK     = $0020;  // #10, #13
+  CC_IDENTIFIER    = $0040;  // Valid in identifiers: alphanumeric + _ -
+  CC_OCTAL_DIGIT   = $0080;  // 0-7
+  CC_BINARY_DIGIT  = $0100;  // 0-1
+
+implementation
+
+uses
+  System.Classes,
+  System.Character,
+  System.TimeSpan,
+  System.DateUtils;
+
+
+const
+  _stringOfChar  : array[1..32] of string = (
+  ' ',
+  '  ',
+  '   ',
+  '    ',
+  '     ',
+  '      ',
+  '       ',
+  '        ',
+  '         ',
+  '          ',
+  '           ',
+  '            ',
+  '             ',
+  '              ',
+  '               ',
+  '                ',
+  '                 ',
+  '                  ',
+  '                   ',
+  '                    ',
+  '                     ',
+  '                      ',
+  '                       ',
+  '                        ',
+  '                         ',
+  '                          ',
+  '                           ',
+  '                            ',
+  '                             ',
+  '                              ',
+  '                               ',
+  '                                '
+);
+
+
+{ TCharClassHelper }
+
+class function TCharClassHelper.IsWhitespace(ch: Char): Boolean;
+begin
+  Result := (CharClassTable[ch] and CC_WHITESPACE) <> 0;
+end;
+
+class function TCharClassHelper.IsDigit(ch: Char): Boolean;
+begin
+  Result := (CharClassTable[ch] and CC_DIGIT) <> 0;
+end;
+
+class function TCharClassHelper.IsHexDigit(ch: Char): Boolean;
+begin
+  Result := (CharClassTable[ch] and CC_HEX_DIGIT) <> 0;
+end;
+
+class function TCharClassHelper.IsAlphaNumeric(ch: Char): Boolean;
+begin
+  Result := (CharClassTable[ch] and CC_ALPHANUMERIC) <> 0;
+end;
+
+class function TCharClassHelper.IsIdentifierChar(ch: Char): Boolean;
+begin
+  Result := (CharClassTable[ch] and CC_IDENTIFIER) <> 0;
+end;
+
+class function TCharClassHelper.IsOctalDigit(ch: Char): Boolean;
+begin
+  Result := (CharClassTable[ch] and CC_OCTAL_DIGIT) <> 0;
+end;
+
+class function TCharClassHelper.IsBinaryDigit(ch: Char): Boolean;
+begin
+  Result := (CharClassTable[ch] and CC_BINARY_DIGIT) <> 0;
+end;
+
+class function TCharClassHelper.IsLineBreak(ch: Char): Boolean;
+begin
+  Result := (CharClassTable[ch] and CC_LINEBREAK) <> 0;
+end;
+
+class function TCharClassHelper.IsAlpha(ch: Char): Boolean;
+begin
+  Result := (CharClassTable[ch] and CC_ALPHA) <> 0;
+end;
+
+class function TCharClassHelper.IsDigitOrUnderscore(ch: Char): Boolean;
+begin
+  Result := ((CharClassTable[ch] and CC_DIGIT) <> 0) or (ch = '_');
+end;
+
+{ TYAMLCharUtils }
+
+class function TYAMLCharUtils.IsAlphaNumeric(C: Char): Boolean;
+begin
+{$IF CompilerVersion > 24.0}
+  result := C.IsLetterOrDigit or (C = '_');
+{$ELSE}
+  result := TCharacter.IsLetterOrDigit(C) or (C = '_');
+{$IFEND}
+end;
+
+class function TYAMLCharUtils.EscapeStringForJSON(const value: string): string;
+var
+  i : integer;
+  charCode : Word;
+  highSurrogate, lowSurrogate : Word;
+begin
+  result := '';
+  {$HIGHCHARUNICODE ON}
+  i := 1;
+  while i <= Length(value) do
+  begin
+    charCode := Ord(value[i]);
+    case value[i] of
+      '"': result := result + '\"';       // Double quote
+      '\': result := result + '\\';       // Backslash
+      #8: result := result + '\b';        // Backspace
+      #12: result := result + '\f';       // Form feed
+      #10: result := result + '\n';       // Line feed
+      #13: result := result + '\r';       // Carriage return
+      #9: result := result + '\t';        // Horizontal tab
+      #0..#7, #11, #14..#31:              // Other control characters (U+0000 through U+001F)
+        result := result + '\u' + IntToHex(charCode, 4);
+      else
+      begin
+        // Check for surrogate pairs
+        if (charCode >= $D800) and (charCode <= $DBFF) then // High surrogate
+        begin
+          if (i < Length(value)) then
+          begin
+            highSurrogate := charCode;
+            lowSurrogate := Ord(value[i + 1]);
+            if (lowSurrogate >= $DC00) and (lowSurrogate <= $DFFF) then // Valid low surrogate
+            begin
+              // Escape surrogate pairs as individual \uXXXX sequences (JSON standard)
+              result := result + '\u' + IntToHex(highSurrogate, 4) + '\u' + IntToHex(lowSurrogate, 4);
+              Inc(i, 2); // Skip both characters in the pair
+              Continue;
+            end
+            else
+            begin
+              // Unpaired high surrogate - escape it
+              result := result + '\u' + IntToHex(charCode, 4);
+            end;
+          end
+          else
+          begin
+            // High surrogate at end of string - escape it
+            result := result + '\u' + IntToHex(charCode, 4);
+          end;
+        end
+        else if (charCode >= $DC00) and (charCode <= $DFFF) then // Unpaired low surrogate
+        begin
+          // Escape unpaired low surrogate
+          result := result + '\u' + IntToHex(charCode, 4);
+        end
+        else
+        begin
+          // Regular Unicode character - preserve as-is
+          result := result + value[i];
+        end;
+      end;
+    end;
+    Inc(i);
+  end;
+  {$HIGHCHARUNICODE OFF}
+end;
+
+class procedure TYAMLCharUtils.EscapeStringForJSON(const value: string; sb: TStringBuilder);
+var
+  i : integer;
+  charCode : Word;
+  highSurrogate, lowSurrogate : Word;
+begin
+  {$HIGHCHARUNICODE ON}
+  i := 1;
+  while i <= Length(value) do
+  begin
+    charCode := Ord(value[i]);
+    case value[i] of
+      '"': sb.Append('\"');       // Double quote
+      '\': sb.Append('\\');       // Backslash
+      #8: sb.Append('\b');        // Backspace
+      #12: sb.Append('\f');       // Form feed
+      #10: sb.Append('\n');       // Line feed
+      #13: sb.Append('\r');       // Carriage return
+      #9: sb.Append('\t');        // Horizontal tab
+      #0..#7, #11, #14..#31:      // Other control characters (U+0000 through U+001F)
+      begin
+        sb.Append('\u');
+        sb.Append(IntToHex(charCode, 4));
+      end;
+      else
+      begin
+        // Check for surrogate pairs
+        if (charCode >= $D800) and (charCode <= $DBFF) then // High surrogate
+        begin
+          if (i < Length(value)) then
+          begin
+            highSurrogate := charCode;
+            lowSurrogate := Ord(value[i + 1]);
+            if (lowSurrogate >= $DC00) and (lowSurrogate <= $DFFF) then // Valid low surrogate
+            begin
+              // Escape surrogate pairs as individual \uXXXX sequences (JSON standard)
+              sb.Append('\u');
+              sb.Append(IntToHex(highSurrogate, 4));
+              sb.Append('\u');
+              sb.Append(IntToHex(lowSurrogate, 4));
+              Inc(i, 2); // Skip both characters in the pair
+              Continue;
+            end
+            else
+            begin
+              // Unpaired high surrogate - escape it
+              sb.Append('\u');
+              sb.Append(IntToHex(charCode, 4));
+            end;
+          end
+          else
+          begin
+            // High surrogate at end of string - escape it
+            sb.Append('\u');
+            sb.Append(IntToHex(charCode, 4));
+          end;
+        end
+        else if (charCode >= $DC00) and (charCode <= $DFFF) then // Unpaired low surrogate
+        begin
+          // Escape unpaired low surrogate
+          sb.Append('\u');
+          sb.Append(IntToHex(charCode, 4));
+        end
+        else
+        begin
+          // Regular Unicode character - preserve as-is
+          sb.Append(value[i]);
+        end;
+      end;
+    end;
+    Inc(i);
+  end;
+  {$HIGHCHARUNICODE OFF}
+end;
+
+class procedure TYAMLCharUtils.EscapeStringForJSONToWriter(const value: string; writer: TYAMLStreamWriter);
+var
+  i : integer;
+  charCode : Word;
+  highSurrogate, lowSurrogate : Word;
+begin
+  {$HIGHCHARUNICODE ON}
+  i := 1;
+  while i <= Length(value) do
+  begin
+    charCode := Ord(value[i]);
+    case value[i] of
+      '"': writer.Write('\"');       // Double quote
+      '\': writer.Write('\\');       // Backslash
+      #8: writer.Write('\b');        // Backspace
+      #12: writer.Write('\f');       // Form feed
+      #10: writer.Write('\n');       // Line feed
+      #13: writer.Write('\r');       // Carriage return
+      #9: writer.Write('\t');        // Horizontal tab
+      #0..#7, #11, #14..#31:      // Other control characters (U+0000 through U+001F)
+      begin
+        writer.Write('\u');
+        writer.Write(IntToHex(charCode, 4));
+      end;
+      else
+      begin
+        // Check for surrogate pairs
+        if (charCode >= $D800) and (charCode <= $DBFF) then // High surrogate
+        begin
+          if (i < Length(value)) then
+          begin
+            highSurrogate := charCode;
+            lowSurrogate := Ord(value[i + 1]);
+            if (lowSurrogate >= $DC00) and (lowSurrogate <= $DFFF) then // Valid low surrogate
+            begin
+              // Escape surrogate pairs as individual \uXXXX sequences (JSON standard)
+              writer.Write('\u');
+              writer.Write(IntToHex(highSurrogate, 4));
+              writer.Write('\u');
+              writer.Write(IntToHex(lowSurrogate, 4));
+              Inc(i, 2); // Skip both characters in the pair
+              Continue;
+            end
+            else
+            begin
+              // Invalid surrogate pair - escape the high surrogate only
+              writer.Write('\u');
+              writer.Write(IntToHex(charCode, 4));
+            end;
+          end
+          else
+          begin
+            // High surrogate at end of string - invalid
+            writer.Write('\u');
+            writer.Write(IntToHex(charCode, 4));
+          end;
+        end
+        else if (charCode >= $DC00) and (charCode <= $DFFF) then // Lone low surrogate
+        begin
+          // Lone low surrogate - invalid, escape it
+          writer.Write('\u');
+          writer.Write(IntToHex(charCode, 4));
+        end
+        else
+        begin
+          // Regular Unicode character - preserve as-is
+          writer.Write(value[i]);
+        end;
+      end;
+    end;
+    Inc(i);
+  end;
+  {$HIGHCHARUNICODE OFF}
+end;
+
+class function TYAMLCharUtils.IsAlpha(C: Char): Boolean;
+begin
+{$IF CompilerVersion > 24.0}
+  result := C.IsLetter;
+{$ELSE}
+  result := TCharacter.IsLetter(C);
+{$IFEND}
+end;
+
+class function TYAMLCharUtils.IsDigit(c : Char) : boolean;
+begin
+  result := (c >= '0') and (c <= '9');
+end;
+
+class function TYAMLCharUtils.IsDigitOrUnderScore(c : Char) : boolean;
+begin
+  result := (c = '_') or (c >= '0') and (c <= '9') ;
+end;
+
+
+class function TYAMLCharUtils.IsHexidecimal(c : Char) : boolean;
+begin
+  Result := IsDigit(c) or ((c >= 'A') and (c <= 'F')) or ((c >= 'a') and (c <= 'f'));
+end;
+
+
+
+class function TYAMLCharUtils.SpaceStr(count: integer): string;
+begin
+  if count < 1 then
+    exit('');
+  case count of
+    1..32: result := _stringOfChar[count];  // Extended cache for deeply nested documents
+  else
+    result := TYAMLCharUtils.StringOfChar(' ',count);
+  end;
+end;
+
+class function TYAMLCharUtils.StringOfChar(const c: Char; count: integer): string;
+var
+  i: Integer;
+begin
+  SetLength(result, count);
+  for i := 1 to count do
+    result[i] := c;
+end;
+
+function DateToISO8601Str(const date: TDateTime; inputIsUTC: Boolean): string;
+var
+  y, m, d, h, mo, sec, ms : Word;
+  timeZoneOffset: integer;
+  offsetHours, offsetMinutes: integer;
+  offsetSign: Char;
+begin
+  if date = 0 then
+    exit('');
+  // Extract date and time components
+  DecodeDate(date, y, mo, d);
+  DecodeTime(date, h, m, sec, ms);
+  if ms <> 0 then
+    Result := Format('%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%.3d', [y, mo, d, h, m, sec, ms])
+  else
+    Result := Format('%.4d-%.2d-%.2dT%.2d:%.2d:%.2d', [y, mo, d, h, m, sec]);
+
+  // Handle timezone part
+  if not inputIsUTC then
+  begin
+    // Get the timezone offset for the original local time
+    timeZoneOffset := Trunc(TTimeZone.Local.GetUTCOffset(date).TotalMinutes);
+
+    if timeZoneOffset <> 0 then
+    begin
+      if timeZoneOffset >= 0 then
+        offsetSign := '+'
+      else
+      begin
+        offsetSign := '-';
+        timeZoneOffset := Abs(timeZoneOffset);
+      end;
+
+      offsetHours := timeZoneOffset div 60;
+      offsetMinutes := timeZoneOffset mod 60;
+      result := Format('%s%s%.02d:%.02d', [result, offsetSign, offsetHours, offsetMinutes]);
+    end;
+  end
+  else
+    result := result + 'Z';
+end;
+
+function ISO8601StrToDateTime(const value: string; returnUTC: boolean): TDateTime;
+var
+  s: string;
+  year, month, day, hour, minute, second, millisecond: integer;
+  tzOffset, localOffset: integer;
+  hasTimeZone: Boolean;
+  isNegativeTZ: Boolean;
+  tzHours, tzMinutes: integer;
+  i, dotPos, tPos, tzPos: integer;
+  dateStr, timeStr, tzStr: string;
+  dt : TDateTime;
+begin
+  Result := 0;
+
+  if value = '' then
+    Exit;
+
+  s := Trim(value);
+
+  // Initialize values
+  hour := 0; minute := 0; second := 0; millisecond := 0;
+  tzOffset := 0;
+  hasTimeZone := False;
+  // Find timezone indicator (Z, +, or -)
+  tzPos := 0;
+  for i := Length(s) downto 1 do
+  begin
+    if CharInSet(s[i], ['Z', '+', '-']) then
+    begin
+      // Make sure it's not a date separator (-)
+      if (s[i] = '-') and (i <= 10) then
+        Continue;
+      tzPos := i;
+      Break;
+    end;
+  end;
+
+  // Split into date/time and timezone parts
+  if tzPos > 0 then
+  begin
+    hasTimeZone := True;
+    tzStr := Copy(s, tzPos, Length(s));
+    s := Copy(s, 1, tzPos - 1);
+
+    // Parse timezone
+    if tzStr = 'Z' then
+      tzOffset := 0
+    else
+    begin
+      isNegativeTZ := tzStr[1] = '-';
+      tzStr := Copy(tzStr, 2, Length(tzStr)); // Remove +/- sign
+
+      if Pos(':', tzStr) > 0 then
+      begin
+        tzHours := StrToIntDef(Copy(tzStr, 1, Pos(':', tzStr) - 1), 0);
+        tzMinutes := StrToIntDef(Copy(tzStr, Pos(':', tzStr) + 1, 2), 0);
+      end
+      else
+      begin
+        if Length(tzStr) >= 2 then
+          tzHours := StrToIntDef(Copy(tzStr, 1, 2), 0)
+        else
+          tzHours := StrToIntDef(tzStr, 0);
+
+        if Length(tzStr) >= 4 then
+          tzMinutes := StrToIntDef(Copy(tzStr, 3, 2), 0)
+        else
+          tzMinutes := 0;
+      end;
+
+      tzOffset := tzHours * 60 + tzMinutes;
+      if isNegativeTZ then
+        tzOffset := -tzOffset;
+    end;
+  end;
+
+  // Find T separator for date/time split
+  tPos := Pos('T', UpperCase(s));
+  if tPos = 0 then
+    tPos := Pos(' ', s); // Also accept space as separator
+
+  if tPos > 0 then
+  begin
+    dateStr := Copy(s, 1, tPos - 1);
+    timeStr := Copy(s, tPos + 1, Length(s));
+  end
+  else
+  begin
+    // Only date provided
+    dateStr := s;
+    timeStr := '';
+  end;
+
+  // Parse date part (YYYY-MM-DD or YYYYMMDD)
+  if Pos('-', dateStr) > 0 then
+  begin
+    // YYYY-MM-DD format
+    year := StrToIntDef(Copy(dateStr, 1, 4), 0);
+    month := StrToIntDef(Copy(dateStr, 6, 2), 1);
+    day := StrToIntDef(Copy(dateStr, 9, 2), 1);
+  end
+  else if Length(dateStr) = 8 then
+  begin
+    // YYYYMMDD format
+    year := StrToIntDef(Copy(dateStr, 1, 4), 0);
+    month := StrToIntDef(Copy(dateStr, 5, 2), 1);
+    day := StrToIntDef(Copy(dateStr, 7, 2), 1);
+  end
+  else
+    raise Exception.Create('Invalid ISO 8601 date format: ' + value);
+
+  // Parse time part if present
+  if timeStr <> '' then
+  begin
+    // Handle fractional seconds
+    dotPos := Pos('.', timeStr);
+    if dotPos = 0 then
+      dotPos := Pos(',', timeStr); // ISO 8601 allows comma as decimal separator
+
+    if dotPos > 0 then
+    begin
+      // Extract fractional part
+      millisecond := 0;
+      if dotPos < Length(timeStr) then
+      begin
+        // Take up to 3 digits for milliseconds
+        i := 1;
+        while (dotPos + i <= Length(timeStr)) and (i <= 3) and CharInSet(timeStr[dotPos + i],['0'..'9']) do
+        begin
+          millisecond := millisecond * 10 + (Ord(timeStr[dotPos + i]) - Ord('0'));
+          Inc(i);
+        end;
+        // Pad to milliseconds if needed
+        while i <= 3 do
+        begin
+          millisecond := millisecond * 10;
+          Inc(i);
+        end;
+      end;
+
+      timeStr := Copy(timeStr, 1, dotPos - 1);
+    end;
+
+    // Parse HH:MM:SS or HHMMSS
+    if Pos(':', timeStr) > 0 then
+    begin
+      // HH:MM:SS format
+      hour := StrToIntDef(Copy(timeStr, 1, 2), 0);
+      if Length(timeStr) >= 5 then
+        minute := StrToIntDef(Copy(timeStr, 4, 2), 0);
+      if Length(timeStr) >= 8 then
+        second := StrToIntDef(Copy(timeStr, 7, 2), 0);
+    end
+    else
+    begin
+      // HHMMSS format
+      hour := StrToIntDef(Copy(timeStr, 1, 2), 0);
+      if Length(timeStr) >= 4 then
+        minute := StrToIntDef(Copy(timeStr, 3, 2), 0);
+      if Length(timeStr) >= 6 then
+        second := StrToIntDef(Copy(timeStr, 5, 2), 0);
+    end;
+  end;
+
+  // Validate ranges
+  if (year < 1) or (month < 1) or (month > 12) or (day < 1) or (day > 31) or
+     (hour < 0) or (hour > 23) or (minute < 0) or (minute > 59) or
+     (second < 0) or (second > 59) or (millisecond < 0) or (millisecond > 999) then
+    raise Exception.Create('Invalid date/time values in ISO 8601 string: ' + value);
+
+  // Create TDateTime
+  try
+    dt := EncodeDate(year, month, day);
+    if (hour <> 0) or (minute <> 0) or (second <> 0) or (millisecond <> 0) then
+      dt := dt + EncodeTime(hour, minute, second, millisecond);
+
+    // Apply timezone conversion if needed
+    if hasTimeZone then
+    begin
+      if returnUTC then
+      begin
+        // Convert from the specified timezone to UTC
+        // tzOffset is positive for +HH:MM and negative for -HH:MM
+        // To convert to UTC: subtract the offset
+        // Example: "15:30:45-11:00" (tzOffset = -660) -> dt - (-660/1440) = dt + 11 hours
+        dt := dt - (tzOffset / (24 * 60)); // Convert minutes to fraction of day
+      end
+      else
+      begin
+        // When returnUTC is False, convert to local time
+        if tzOffset = 0 then
+        begin
+          // Input is UTC (Z suffix), convert from UTC to local time
+          tzOffset := Trunc(TTimeZone.Local.GetUTCOffset(dt).TotalMinutes);
+          dt := dt + (tzOffset / (24 * 60)); // Add local offset to UTC time
+        end
+        else
+        begin
+          // Input has explicit timezone offset, convert to local time
+          // First convert to UTC, then to local time
+          dt := dt - (tzOffset / (24 * 60)); // Convert to UTC
+          localOffset := Trunc(TTimeZone.Local.GetUTCOffset(dt).TotalMinutes);
+          dt := dt + (localOffset / (24 * 60)); // Convert to local time
+        end;
+      end;
+    end
+    else
+    begin
+      // No timezone information in the string
+      if returnUTC then
+      begin
+        // Treat the datetime as local time and convert to UTC
+        // Get the local timezone offset for this specific datetime
+        tzOffset := Trunc(TTimeZone.Local.GetUTCOffset(dt).TotalMinutes);
+        dt := dt - (tzOffset / (24 * 60)); // Convert from local to UTC
+      end;
+      // If returnUTC is False, treat as local time (no conversion needed)
+    end;
+
+    Result := dt;
+
+  except
+    on E: Exception do
+      raise Exception.Create('Error creating datetime from ISO 8601 string "' + value + '": ' + E.Message);
+  end;
+end;
+
+
+
+class function TYAMLDateUtils.ISO8601StrToLocalDateTime(const value: string): TDateTime;
+begin
+  result := ISO8601StrToDateTime(value, false);
+end;
+
+class function TYAMLDateUtils.ISO8601StrToUTCDateTime(const value: string): TDateTime;
+begin
+  result := ISO8601StrToDateTime(value, true);
+end;
+
+class function TYAMLDateUtils.LocalDateToISO8601Str(const date: TDateTime): string;
+begin
+  result := DateToISO8601Str(date, false);
+end;
+
+class function TYAMLDateUtils.UTCDateToISO8601Str(const date: TDateTime): string;
+begin
+  result := DateToISO8601Str(date, true);
+end;
+
+{$IFDEF HAS_DIRECTIVE_ZEROBASEDSTRINGS}
+  {$ZEROBASEDSTRINGS OFF}
+{$ENDIF}
+
+
+function _ValUInt64(const s: string; var code: Integer): UInt64;
+const
+  FirstIndex = 1;
+var
+  i: Integer;
+  dig: Integer;
+  sign: Boolean;
+  empty: Boolean;
+begin
+  i := FirstIndex;
+  Result := 0;
+  if s = '' then
+  begin
+    code := 1;
+    exit;
+  end;
+  while s[i] = Char(' ') do
+    Inc(i);
+  sign := False;
+  if s[i] =  Char('-') then
+  begin
+    sign := True;
+    Inc(i);
+  end
+  else if s[i] =  Char('+') then
+    Inc(i);
+  empty := True;
+  if (s[i] =  Char('$')) or (Upcase(s[i]) =  Char('X'))
+    or ((s[i] =  Char('0')) and (I < Length(S)) and (Upcase(s[i+1]) =  Char('X'))) then
+  begin
+    if s[i] =  Char('0') then
+      Inc(i);
+    Inc(i);
+    while True do
+    begin
+      case   Char(s[i]) of
+       Char('0').. Char('9'): dig := Ord(s[i]) -  Ord('0');
+       Char('A').. Char('F'): dig := Ord(s[i]) - (Ord('A') - 10);
+       Char('a').. Char('f'): dig := Ord(s[i]) - (Ord('a') - 10);
+      else
+        break;
+      end;
+      if Result > (High(UInt64) shr 4) then
+        Break;
+      if sign and (dig <> 0) then
+        Break;
+      Result := Result shl 4 + Cardinal(dig);
+      Inc(i);
+      empty := False;
+    end;
+  end
+  else
+  begin
+    while True do
+    begin
+      case  Char(s[i]) of
+        Char('0').. Char('9'): dig := Ord(s[i]) - Ord('0');
+      else
+        break;
+      end;
+                // 18446744073709551615
+      if Result >= 1844674407370955161 then
+      begin
+        if (Result > 1844674407370955161) or (High(UInt64) - Result*10 < dig) then
+          Break
+      end;
+      if sign and (dig <> 0) then
+        Break;
+      Result := Result*10 + Cardinal(dig);
+      Inc(i);
+      empty := False;
+    end;
+  end;
+  if (s[i] <> Char(#0)) or empty then
+    code := i + 1 - FirstIndex
+  else
+    code := 0;
+end;
+
+function TryStrToUInt64(const S: string; out Value: UInt64): Boolean;
+var
+  E: Integer;
+begin
+  Value := _ValUInt64(S, E);
+  Result := E = 0;
+end;
+
+{ TStringBuilderHelper }
+
+procedure TStringBuilderHelper.Reset;
+begin
+  Self.Length := 0;
+end;
+
+initialization
+  // Initialize character classification table
+  FillChar(CharClassTable, SizeOf(CharClassTable), 0);
+
+  // Digits 0-9: digit, hex digit, alphanumeric, identifier
+  CharClassTable['0'] := CC_DIGIT or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER or CC_BINARY_DIGIT or CC_OCTAL_DIGIT;
+  CharClassTable['1'] := CC_DIGIT or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER or CC_BINARY_DIGIT or CC_OCTAL_DIGIT;
+  CharClassTable['2'] := CC_DIGIT or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER or CC_OCTAL_DIGIT;
+  CharClassTable['3'] := CC_DIGIT or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER or CC_OCTAL_DIGIT;
+  CharClassTable['4'] := CC_DIGIT or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER or CC_OCTAL_DIGIT;
+  CharClassTable['5'] := CC_DIGIT or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER or CC_OCTAL_DIGIT;
+  CharClassTable['6'] := CC_DIGIT or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER or CC_OCTAL_DIGIT;
+  CharClassTable['7'] := CC_DIGIT or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER or CC_OCTAL_DIGIT;
+  CharClassTable['8'] := CC_DIGIT or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['9'] := CC_DIGIT or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER;
+
+  // Uppercase A-F: alpha, hex digit, alphanumeric, identifier
+  CharClassTable['A'] := CC_ALPHA or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['B'] := CC_ALPHA or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['C'] := CC_ALPHA or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['D'] := CC_ALPHA or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['E'] := CC_ALPHA or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['F'] := CC_ALPHA or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER;
+
+  // Uppercase G-Z: alpha, alphanumeric, identifier
+  CharClassTable['G'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['H'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['I'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['J'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['K'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['L'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['M'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['N'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['O'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['P'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['Q'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['R'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['S'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['T'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['U'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['V'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['W'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['X'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['Y'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['Z'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+
+  // Lowercase a-f: alpha, hex digit, alphanumeric, identifier
+  CharClassTable['a'] := CC_ALPHA or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['b'] := CC_ALPHA or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['c'] := CC_ALPHA or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['d'] := CC_ALPHA or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['e'] := CC_ALPHA or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['f'] := CC_ALPHA or CC_HEX_DIGIT or CC_ALPHANUMERIC or CC_IDENTIFIER;
+
+  // Lowercase g-z: alpha, alphanumeric, identifier
+  CharClassTable['g'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['h'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['i'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['j'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['k'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['l'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['m'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['n'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['o'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['p'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['q'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['r'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['s'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['t'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['u'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['v'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['w'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['x'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['y'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+  CharClassTable['z'] := CC_ALPHA or CC_ALPHANUMERIC or CC_IDENTIFIER;
+
+  // Whitespace
+  CharClassTable[' '] := CC_WHITESPACE;
+  CharClassTable[#9] := CC_WHITESPACE;
+
+  // Line breaks
+  CharClassTable[#10] := CC_LINEBREAK;
+  CharClassTable[#13] := CC_LINEBREAK;
+
+  // Identifier special chars
+  CharClassTable['_'] := CharClassTable['_'] or CC_IDENTIFIER;
+  CharClassTable['-'] := CharClassTable['-'] or CC_IDENTIFIER;
+
+end.
