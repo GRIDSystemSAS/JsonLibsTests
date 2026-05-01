@@ -1,3 +1,56 @@
+<div align="right">
+
+[🇫🇷 Version Française](readme_fr.md)
+
+</div>
+
+# JsonLibsTests
+
+## Context
+
+Over the years, working at Grid System on Pascal/Delphi projects, we have crossed
+paths with dozens of JSON libraries. Each of them came with its own approach —
+some fast, some surprising, all requiring real adaptation work to plug in.
+
+To keep technical debt under control on our larger projects, we ended up
+designing a common class interface that abstracts the underlying JSON library.
+On several occasions this paid off: we were able to swap the original library
+for a more suitable one on specific parts of a project, without rewriting
+business code.
+
+We are now releasing the open source version of this work: the front interface
+itself, and a tool that evaluates how strictly each backend library follows
+[RFC 8259](https://datatracker.ietf.org/doc/html/rfc8259).
+
+## What this repository is — and is not
+
+**Focus**
+
+- The common front interface, which we want to keep refining.
+- Strict RFC 8259 conformance, which matters a lot in the fields we work in.
+
+**Out of scope**
+
+- **No performance benchmark.** All libraries are driven through our common
+  interface, which can itself introduce overhead in some cases. Reporting raw
+  numbers in this setup would be misleading.
+
+## Pascal compatibility
+
+The interface and the test runner target both Delphi and FPC. Backend
+libraries, however, are used as-is: not all of them compile on both
+compilers, and we do not patch them.
+
+## Contributing
+
+- If you maintain one of the tested libraries and you ship changes, please let
+  us know — we will refresh the git tree on our side. Pull requests are also
+  very welcome.
+- ⭐ **Stars help visibility.** If this project is useful to you, a star goes
+  a long way. Thanks!
+
+
+  
 # JsonLibsTests
 
 ## What is it
@@ -65,3 +118,17 @@ Here is the output of the program after a test launched on 27/04/2026.
 |    | TOTAL                 |                       | 1088 |   42 |    48 |  1178 |  92,4% | 0,486s |
 +----+-----------------------+-----------------------+------+------+-------+-------+--------+--------+
 ```
+
+### Reading the results
+
+Each library is evaluated against the same set of RFC 8259 test cases.
+Three outcomes are possible:
+
+- **Pass** — the library handled the input as the RFC requires.
+- **Fail** — the library produced a result, but one that does not conform to
+  the RFC (e.g. it accepted an invalid document, or rejected a valid one).
+- **Error** — the library raised an exception, crashed, or otherwise failed
+  to produce a usable answer on the input.
+
+`Fail` is therefore a *correctness* signal against the spec, while `Error` is
+a *robustness* signal about the library itself. Both count against the score.
