@@ -90,6 +90,20 @@ After compiling the project (main source is tests/gsJsonTests.dpr), you can run 
 ```
 gsJsonTests.exe -pp -nw
 ```
+### Reading the results
+
+Each library is evaluated against the same set of RFC 8259 test cases.
+Three outcomes are possible:
+
+- **Pass** — the library handled the input as the RFC requires.
+- **Fail** — the library produced a result, but one that does not conform to
+  the RFC (e.g. it accepted an invalid document, or rejected a valid one).
+- **Error** — the library raised an exception, crashed, or otherwise failed
+  to produce a usable answer on the input.
+
+`Fail` is therefore a *correctness* signal against the spec, while `Error` is
+a *robustness* signal about the library itself. Both count against the score.
+
 
 Here is the output of the program after a test launched on 27/04/2026.
 
@@ -120,20 +134,6 @@ Here is the output of the program after a test launched on 27/04/2026.
 |    | TOTAL                 |                       | 1088 |   42 |    48 |  1178 |  92,4% | 0,486s |
 +----+-----------------------+-----------------------+------+------+-------+-------+--------+--------+
 ```
-
-### Reading the results
-
-Each library is evaluated against the same set of RFC 8259 test cases.
-Three outcomes are possible:
-
-- **Pass** — the library handled the input as the RFC requires.
-- **Fail** — the library produced a result, but one that does not conform to
-  the RFC (e.g. it accepted an invalid document, or rejected a valid one).
-- **Error** — the library raised an exception, crashed, or otherwise failed
-  to produce a usable answer on the input.
-
-`Fail` is therefore a *correctness* signal against the spec, while `Error` is
-a *robustness* signal about the library itself. Both count against the score.
 
 
 
