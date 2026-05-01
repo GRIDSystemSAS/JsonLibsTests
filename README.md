@@ -6,6 +6,8 @@
 
 # JsonLibsTests
 
+# Pascal Delphi/FPC project for JSON RFC 8259 coverage.
+
 ## Context
 
 Over the years, working at Grid System on Pascal/Delphi projects, we have crossed
@@ -146,6 +148,8 @@ a *robustness* signal about the library itself. Both count against the score.
 [↑ Back to top / English version](#jsonlibstests)
 
 </div>
+
+# Un projet JSON pour Pascal Delphi/FPC qui cible la conformité RFC 8259.
 
 ## Contexte
 
