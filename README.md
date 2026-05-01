@@ -1,6 +1,6 @@
 <div align="right">
 
-[🇫🇷 Version Française](readme_fr.md)
+[🇫🇷 Version Française ↓](#-version-française)
 
 </div>
 
