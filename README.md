@@ -61,6 +61,7 @@ This project allows testing the [RFC 8259](https://datatracker.ietf.org/doc/html
 
 Here are the listed librairies: (no date -> owned repo, no repo available)
 
+```
 Lib                                      Upstream                                         Updated
 ---------------------------------------  -----------------------------------------------  ----------
 gsJson (gsJson (native))                 https://github.com/GRIDSystemSAS/JsonLibsTests
@@ -82,6 +83,7 @@ superObject                              https://github.com/hgourvest/superobjec
 uJson
 vsoftYaml (VSoft.YAML)                   https://github.com/VSoftTechnologies/VSoft.YAML  2026-05-05
 xSuperObject                             https://github.com/onryldz/x-superobject         2026-05-05
+```
 
 # How to use
 
@@ -189,6 +191,7 @@ compilent pas forcément sur les deux compilateurs, et nous n'y touchons pas.
 
 ## Bibliothèques évaluées (pas de date "updated" ->soit repos interne, soit pas de repo localisable)
 
+```
 Lib                                      Upstream                                         Updated
 ---------------------------------------  -----------------------------------------------  ----------
 gsJson (gsJson (native))                 https://github.com/GRIDSystemSAS/JsonLibsTests
@@ -210,6 +213,7 @@ superObject                              https://github.com/hgourvest/superobjec
 uJson
 vsoftYaml (VSoft.YAML)                   https://github.com/VSoftTechnologies/VSoft.YAML  2026-05-05
 xSuperObject                             https://github.com/onryldz/x-superobject         2026-05-05
+```
 
 ## Comment l'utiliser
 
