@@ -109,30 +109,32 @@ a *robustness* signal about the library itself. Both count against the score.
 Here is the output of the program after a test launched on 05/05/2026.
 
 ```
+  igsJson - RFC 8259 Compliance Test Results
+  ==========================================
+
 +----+-----------------------+-----------------------+------+------+-------+-------+--------+--------+
 | #  |  Backend              | Factory ID            | Pass | Fail | Error | Total | Score  |  Time  |
 +----+-----------------------+-----------------------+------+------+-------+-------+--------+--------+
-|  1 | dwsJson               | dwsjson               |   62 |    0 |     0 |    62 | 100,0% | 0,017s |
-|  2 | gsJson                | gsjson                |   62 |    0 |     0 |    62 | 100,0% | 0,016s |
-|  3 | jdo                   | jdo                   |   62 |    0 |     0 |    62 | 100,0% | 0,016s |
-|  4 | xSuperObject          | xsuperobject          |   62 |    0 |     0 |    62 | 100,0% | 0,017s |
-|  5 | beroJson              | berojson              |   61 |    1 |     0 |    62 |  98,4% | 0,018s |
-|  6 | embarcaderoDelphiJson | embarcaderoDelphiJson |   61 |    1 |     0 |    62 |  98,4% | 0,016s |
-|  7 | grijjyBson            | grijjybson            |   61 |    1 |     0 |    62 |  98,4% | 0,016s |
-|  8 | neslibJson            | neslibjson            |   60 |    2 |     0 |    62 |  96,8% | 0,014s |
-|  9 | vsoftYaml             | vsoftyaml             |   60 |    2 |     0 |    62 |  96,8% | 0,015s |
+|  1 | dwsJson               | dwsjson               |   62 |    0 |     0 |    62 | 100,0% | 0,016s |
+|  2 | gsJson                | gsjson                |   62 |    0 |     0 |    62 | 100,0% | 0,015s |
+|  3 | jdo                   | jdo                   |   62 |    0 |     0 |    62 | 100,0% | 0,014s |
+|  4 | xSuperObject          | xsuperobject          |   62 |    0 |     0 |    62 | 100,0% | 0,019s |
+|  5 | beroJson              | berojson              |   61 |    1 |     0 |    62 |  98,4% | 0,017s |
+|  6 | embarcaderoDelphiJson | embarcaderoDelphiJson |   61 |    1 |     0 |    62 |  98,4% | 0,014s |
+|  7 | grijjyBson            | grijjybson            |   61 |    1 |     0 |    62 |  98,4% | 0,014s |
+|  8 | vsoftYaml             | vsoftyaml             |   61 |    1 |     0 |    62 |  98,4% | 0,016s |
+|  9 | neslibJson            | neslibjson            |   60 |    2 |     0 |    62 |  96,8% | 0,015s |
 | 10 | dynamicDataObjects    | dynamicdataobjects    |   59 |    1 |     2 |    62 |  95,2% | 0,016s |
-| 11 | lkJson                | lkjson                |   59 |    3 |     0 |    62 |  95,2% | 0,016s |
-| 12 | superObject           | superobject           |   59 |    3 |     0 |    62 |  95,2% | 0,014s |
-| 13 | mormot2               | mormot2               |   56 |    6 |     0 |    62 |  90,3% | 0,016s |
-| 14 | mcJson                | mcjson                |   55 |    2 |     5 |    62 |  88,7% | 0,019s |
-| 15 | chimera               | chimera               |   54 |    5 |     3 |    62 |  87,1% | 0,018s |
-| 16 | json4Delphi           | json4delphi           |   52 |    2 |     8 |    62 |  83,9% | 0,017s |
-| 17 | jsonTools             | jsontools             |   50 |    5 |     7 |    62 |  80,6% | 0,019s |
-| 18 | myJson                | myjson                |   48 |    6 |     8 |    62 |  77,4% | 0,020s |
-| 19 | jsonDoc               | jsondoc               |   45 |    2 |    15 |    62 |  72,6% | 0,021s |
+| 11 | lkJson                | lkjson                |   59 |    3 |     0 |    62 |  95,2% | 0,015s |
+| 12 | superObject           | superobject           |   59 |    3 |     0 |    62 |  95,2% | 0,013s |
+| 13 | mormot2               | mormot2               |   56 |    6 |     0 |    62 |  90,3% | 0,015s |
+| 14 | mcJson                | mcjson                |   55 |    2 |     5 |    62 |  88,7% | 0,017s |
+| 15 | chimera               | chimera               |   54 |    5 |     3 |    62 |  87,1% | 0,017s |
+| 16 | json4Delphi           | json4delphi           |   52 |    2 |     8 |    62 |  83,9% | 0,016s |
+| 17 | myJson                | myjson                |   49 |    6 |     7 |    62 |  79,0% | 0,019s |
+| 18 | jsonDoc               | jsondoc               |   45 |    2 |    15 |    62 |  72,6% | 0,019s |
 +----+-----------------------+-----------------------+------+------+-------+-------+--------+--------+
-|    | TOTAL                 |                       | 1088 |   42 |    48 |  1178 |  92,4% | 0,320s |
+|    | TOTAL                 |                       | 1040 |   36 |    40 |  1116 |  93,2% | 0,284s |
 +----+-----------------------+-----------------------+------+------+-------+-------+--------+--------+
 ```
 
@@ -243,30 +245,32 @@ deux pénalisent le score.
 Voici la sortie du programme après une exécution lancée le 05/05/2026 :
 
 ~~~
+  igsJson - RFC 8259 Compliance Test Results
+  ==========================================
+
 +----+-----------------------+-----------------------+------+------+-------+-------+--------+--------+
 | #  |  Backend              | Factory ID            | Pass | Fail | Error | Total | Score  |  Time  |
 +----+-----------------------+-----------------------+------+------+-------+-------+--------+--------+
-|  1 | dwsJson               | dwsjson               |   62 |    0 |     0 |    62 | 100,0% | 0,017s |
-|  2 | gsJson                | gsjson                |   62 |    0 |     0 |    62 | 100,0% | 0,016s |
-|  3 | jdo                   | jdo                   |   62 |    0 |     0 |    62 | 100,0% | 0,016s |
-|  4 | xSuperObject          | xsuperobject          |   62 |    0 |     0 |    62 | 100,0% | 0,017s |
-|  5 | beroJson              | berojson              |   61 |    1 |     0 |    62 |  98,4% | 0,018s |
-|  6 | embarcaderoDelphiJson | embarcaderoDelphiJson |   61 |    1 |     0 |    62 |  98,4% | 0,016s |
-|  7 | grijjyBson            | grijjybson            |   61 |    1 |     0 |    62 |  98,4% | 0,016s |
-|  8 | neslibJson            | neslibjson            |   60 |    2 |     0 |    62 |  96,8% | 0,014s |
-|  9 | vsoftYaml             | vsoftyaml             |   60 |    2 |     0 |    62 |  96,8% | 0,015s |
+|  1 | dwsJson               | dwsjson               |   62 |    0 |     0 |    62 | 100,0% | 0,016s |
+|  2 | gsJson                | gsjson                |   62 |    0 |     0 |    62 | 100,0% | 0,015s |
+|  3 | jdo                   | jdo                   |   62 |    0 |     0 |    62 | 100,0% | 0,014s |
+|  4 | xSuperObject          | xsuperobject          |   62 |    0 |     0 |    62 | 100,0% | 0,019s |
+|  5 | beroJson              | berojson              |   61 |    1 |     0 |    62 |  98,4% | 0,017s |
+|  6 | embarcaderoDelphiJson | embarcaderoDelphiJson |   61 |    1 |     0 |    62 |  98,4% | 0,014s |
+|  7 | grijjyBson            | grijjybson            |   61 |    1 |     0 |    62 |  98,4% | 0,014s |
+|  8 | vsoftYaml             | vsoftyaml             |   61 |    1 |     0 |    62 |  98,4% | 0,016s |
+|  9 | neslibJson            | neslibjson            |   60 |    2 |     0 |    62 |  96,8% | 0,015s |
 | 10 | dynamicDataObjects    | dynamicdataobjects    |   59 |    1 |     2 |    62 |  95,2% | 0,016s |
-| 11 | lkJson                | lkjson                |   59 |    3 |     0 |    62 |  95,2% | 0,016s |
-| 12 | superObject           | superobject           |   59 |    3 |     0 |    62 |  95,2% | 0,014s |
-| 13 | mormot2               | mormot2               |   56 |    6 |     0 |    62 |  90,3% | 0,016s |
-| 14 | mcJson                | mcjson                |   55 |    2 |     5 |    62 |  88,7% | 0,019s |
-| 15 | chimera               | chimera               |   54 |    5 |     3 |    62 |  87,1% | 0,018s |
-| 16 | json4Delphi           | json4delphi           |   52 |    2 |     8 |    62 |  83,9% | 0,017s |
-| 17 | jsonTools             | jsontools             |   50 |    5 |     7 |    62 |  80,6% | 0,019s |
-| 18 | myJson                | myjson                |   48 |    6 |     8 |    62 |  77,4% | 0,020s |
-| 19 | jsonDoc               | jsondoc               |   45 |    2 |    15 |    62 |  72,6% | 0,021s |
+| 11 | lkJson                | lkjson                |   59 |    3 |     0 |    62 |  95,2% | 0,015s |
+| 12 | superObject           | superobject           |   59 |    3 |     0 |    62 |  95,2% | 0,013s |
+| 13 | mormot2               | mormot2               |   56 |    6 |     0 |    62 |  90,3% | 0,015s |
+| 14 | mcJson                | mcjson                |   55 |    2 |     5 |    62 |  88,7% | 0,017s |
+| 15 | chimera               | chimera               |   54 |    5 |     3 |    62 |  87,1% | 0,017s |
+| 16 | json4Delphi           | json4delphi           |   52 |    2 |     8 |    62 |  83,9% | 0,016s |
+| 17 | myJson                | myjson                |   49 |    6 |     7 |    62 |  79,0% | 0,019s |
+| 18 | jsonDoc               | jsondoc               |   45 |    2 |    15 |    62 |  72,6% | 0,019s |
 +----+-----------------------+-----------------------+------+------+-------+-------+--------+--------+
-|    | TOTAL                 |                       | 1088 |   42 |    48 |  1178 |  92,4% | 0,320s |
+|    | TOTAL                 |                       | 1040 |   36 |    40 |  1116 |  93,2% | 0,284s |
 +----+-----------------------+-----------------------+------+------+-------+-------+--------+--------+
 ~~~
 
