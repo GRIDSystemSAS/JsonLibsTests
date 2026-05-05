@@ -6,7 +6,6 @@
 ///
 ///
 ///*******************************************************
-
 unit gs.json.impl.dynamicDataObjects;
 
 interface

@@ -6,7 +6,6 @@
 ///
 ///
 ///*******************************************************
-
 unit GS.System.CommandLineParser;
 
 {$IFDEF FPC}
@@ -85,12 +84,26 @@ type
 
   function gsCommandLineParser : iGSCommandLine;
 
+  /// Retire uniquement le prefixe '--' ou '-' d'un argument CLI.
+  /// Anciennement Replace('-',''), qui supprimait aussi les tirets internes
+  /// et empechait l'usage de noms d'options comme 'verbose-light' ou 'dry-run'.
+  function StripParamPrefix(const S : string) : string;
+
 
 implementation
 
   function gsCommandLineParser : iGSCommandLine;
   begin
     result := TGSCmdLineManager.Create;
+  end;
+
+  function StripParamPrefix(const S : string) : string;
+  begin
+    Result := S;
+    if Result.StartsWith('--') then
+      Result := Result.Substring(2)
+    else if Result.StartsWith('-') then
+      Result := Result.Substring(1);
   end;
 
 
@@ -163,7 +176,7 @@ begin
   l := FCmdLine;
   for i := 0 to Length(l)-1 do
     if (l[i].StartsWith('-')) or (l[i].StartsWith('--')) then begin
-      lf := l[i].Replace('-','');
+      lf := StripParamPrefix(l[i]);
       if (lf = paramName) or IsShortCutInSameParam(paramname,lf,aParam) then begin
         if i<length(l)-1 then
           for j := i+1 to length(l)-1 do begin
@@ -186,7 +199,7 @@ begin
   l := FCmdLine;
   for i := 0 to Length(l)-1 do
     if (l[i].StartsWith('-')) or (l[i].StartsWith('--')) then begin
-      lf := l[i].Replace('-','');
+      lf := StripParamPrefix(l[i]);
       if (lf = paramName) or IsShortCutInSameParam(paramname,lf,aParam)  then begin //direct parameter Or registered one.
         result := true;
         break;
@@ -205,7 +218,7 @@ begin
   if aParamName.Trim='' then
     Exit;
   lp := aParamName.ToLower;
-  lp := lp.Replace('-','');
+  lp := StripParamPrefix(lp);
   for l in FParams do begin
     lsc := l.Value.shortcutList.Split([' ',',',';']);
     if length(lsc)>0 then

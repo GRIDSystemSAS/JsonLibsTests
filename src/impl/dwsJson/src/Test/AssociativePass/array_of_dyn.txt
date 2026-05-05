@@ -1,5 +1,0 @@
-> alpha
-beta
-> alpha,delta
-beta,gamma
-beta

@@ -1,2 +1,0 @@
-Syntax Error: Cannot assign a value to the left-side argument [line: 5, column: 11]
-Syntax Error: Cannot assign a value to the left-side argument [line: 9, column: 10]

@@ -6,7 +6,6 @@
 ///
 ///
 ///*******************************************************
-
 unit gs.json.impl.json4Delphi;
 
 interface
@@ -151,7 +150,7 @@ begin
     FJson.Delete('__init__');
     exit;
   end;
-  // Was an array — replace entirely
+  // Was an array â€” replace entirely
   if FOwned then
     FJson.Free;
   FJson := TJson.Create;
@@ -177,7 +176,7 @@ begin
     FJson.Delete(0);
     exit;
   end;
-  // Was an object — replace entirely
+  // Was an object â€” replace entirely
   if FOwned then
     FJson.Free;
   FJson := TJson.Create;
@@ -203,7 +202,7 @@ end;
 // ---------------------------------------------------------------------------
 // Helper : add array-of-const elements to a TJsonArray
 // Note: json4delphi TJsonArray.Put accepts Integer, Extended, Boolean, String,
-//       TJsonObject, TJsonArray, TJsonValue — no Int64 overload.
+//       TJsonObject, TJsonArray, TJsonValue â€” no Int64 overload.
 //       Int64 values are cast to Integer (truncated if > MaxInt).
 // ---------------------------------------------------------------------------
 procedure addConstToArray(arr : TJsonArray; const vals : array of const);

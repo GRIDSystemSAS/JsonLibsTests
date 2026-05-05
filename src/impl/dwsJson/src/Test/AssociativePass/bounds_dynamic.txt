@@ -1,8 +1,0 @@
-0 Upper exceeded
--1 Lower exceeded
-123
-1 Upper exceeded
--1 Lower exceeded
-123
-456
-2 Upper exceeded

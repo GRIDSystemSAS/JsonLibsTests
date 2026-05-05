@@ -1,6 +1,0 @@
-Errors >>>>
-Hint: "Ttest" does not match case of declaration ("TTest") [line: 23, column: 12]
-Result >>>>
-1
-2
-3

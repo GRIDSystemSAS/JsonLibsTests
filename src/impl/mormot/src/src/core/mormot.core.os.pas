@@ -187,7 +187,7 @@ const
   /// a fake response code, generated for client side panic failure/exception
   // - for it is the number of a man, and that number is 666
   HTTP_CLIENTERROR = 666;
-  /// a fake response code, usedfor internal THttpAsyncServer asynchronous process
+  /// a fake response code, used for internal THttpAsyncServer asynchronous process
   HTTP_ASYNCRESPONSE = 777;
 
   /// the successful HTTP response codes after a GET request
@@ -367,6 +367,7 @@ type
 
   /// the known operating systems
   // - it will also recognize most Linux distributions
+  // - stored as integer in TOperatingSystemVersion: do not change the order
   TOperatingSystem = (
     osUnknown,
     osWindows,
@@ -404,7 +405,9 @@ type
     osAlpine,
     osAndroid,
     osApt,
-    osRpm);
+    osRpm,
+    osAlma,
+    osRocky);
   TOperatingSystems = set of TOperatingSystem;
 
   /// the recognized Windows versions
@@ -570,7 +573,9 @@ const
     'Alpine',       // osAlpine
     'Android',      // osAndroid
     'Debian-based', // osApt - any Debian-based flavor
-    'Rpm-based');   // osRpm - any RedHat-based flavor
+    'Rpm-based',    // osRpm - any RedHat-based flavor
+    'Alma',         // osAlma
+    'Rocky');       // osRocky
 
   /// translate one operating system (and distribution) into a single character
   // - may be used internally e.g. for a HTTP User-Agent header, as with
@@ -612,19 +617,22 @@ const
     'p', // Alpine
     'J', // Android (J=JVM)
     '1', // Apt-based
-    '2'  // Rpm-based
+    '2', // Rpm-based
+    'h', // Alma (rHel fork)
+    'k'  // Rocky
     );
 
   /// the operating systems items which actually have a Linux kernel
-  OS_LINUX = [osLinux, osArch .. osSlackware, osSuse, osTrustix .. osRpm];
+  OS_LINUX = [osLinux, osArch .. osSlackware, osSuse, osTrustix .. osRocky];
 
   /// used to recognize the package management system used by a Linux OS
   LINUX_DIST: array[TLinuxDistribution] of TOperatingSystems = (
     [osUnknown, osWindows, osOSX, osBSD, osPOSIX, osSolaris, osSynology],  // ldNotLinux
     [osLinux, osSlackware, osClear, osLFS, osXen, osAlpine],               // ldUndefined
     [osDebian, osKnoppix, osMint, osUbuntu, osApt],                        // ldApt
-    [osAurox, osFedora, osMandrake, osMandriva, osNovell, osSuse, osTrustix, // ldRpm
-     osUnited, osRedHat, osOracle, osMageia, osCentOS, osCloud, osAmazon, osRpm],
+    [osAurox, osFedora, osMandrake, osMandriva, osNovell, osSuse, osTrustix,
+     osUnited, osRedHat, osOracle, osMageia, osCentOS, osCloud, osAmazon,  // ldRpm
+     osRpm, osAlma, osRocky],
     [osArch],                                                              // ldPacman
     [osGentoo, osCoreOs],                                                  // ldPortage
     [osAndroid]);                                                          // ldAndroid
@@ -3374,6 +3382,14 @@ function ExtractNameU(const FileName: RawUtf8): RawUtf8;
 // - but cross-platform, i.e. detect both '\' and '/' on all platforms
 function ExtractExt(const FileName: TFileName; WithoutDot: boolean = false): TFileName;
 
+/// returns true if the file name as a non-void extension (e.g. 'toto.txt' = true)
+// - see also GetFileNameExtIndex() from mormot.core.text
+function HasExt(const FileName: TFileName): boolean;
+
+/// case-insensitive check a file name extension, returning -1 or Exts[] found index
+function SameExt(const FileName: TFileName; const Exts: array of TFileName;
+  WithoutDot: boolean = false): PtrInt;
+
 // defined here for proper ExtractExtP() inlining
 function GetLastDelimU(const FileName: RawUtf8; OtherDelim: AnsiChar = #0): PtrInt;
 function GetLastDelim(const FileName: TFileName; OtherDelim: cardinal = 0): PtrInt;
@@ -3830,7 +3846,7 @@ function GetDiskPartitions: TDiskPartitions;
 procedure XorOSEntropy(var e: THash512Rec);
 
 type
-  /// available console colors
+  /// available console colors for TextColor/TextBackground functions
   TConsoleColor = (
     ccBlack,
     ccBlue,
@@ -3848,6 +3864,9 @@ type
     ccLightMagenta,
     ccYellow,
     ccWhite);
+const
+  /// TextColor(ccLightGray) has a special meaning of "default" console color
+  ccDefault = ccLightGray;
 
 var
   /// low-level handle used for console writing
@@ -3878,14 +3897,15 @@ function StdOutIsTTY: boolean; {$ifdef FPC} inline; {$endif}
 {$endif OSWINDOWS}
 
 /// change the console text writing color
+// - TextColor(ccDefault=ccLightGray) will reset to the default console color
 procedure TextColor(Color: TConsoleColor);
 
-/// change the console text background color
+/// change the console text background color - do nothing on POSIX
 procedure TextBackground(Color: TConsoleColor);
 
 /// write some UTF-8 text to the console using a given color
 // - this method is protected by its own CriticalSection for output consistency
-procedure ConsoleWrite(const Text: RawUtf8; Color: TConsoleColor = ccLightGray;
+procedure ConsoleWrite(const Text: RawUtf8; Color: TConsoleColor = ccDefault;
   NoLineFeed: boolean = false; NoColor: boolean = false); overload;
   {$ifdef HASINLINE} inline; {$endif}
 
@@ -4209,7 +4229,7 @@ type
   TLightLock = object
   {$endif USERECORDWITHMETHODS}
   private
-    Flags: PtrUInt;
+    Flags: PtrUInt;     // 0=unlocked, 1=locked
     procedure LockSpin; // called by the Lock method when inlined
   public
     /// to be called if the instance has not been filled with 0
@@ -4249,9 +4269,9 @@ type
   TMultiLightLock = object
   {$endif USERECORDWITHMETHODS}
   private
-    Flags: PtrUInt;      // is also the reentrant > 0 counter
-    ThreadID: TThreadID; // pointer on POSIX, DWord on Windows
-    procedure LockSpin;  // called by the Lock method when inlined
+    Flags: PtrUInt;     // is also the reentrant > 0 counter
+    ThreadID: pointer;  // TThreadID is pointer on POSIX, DWord on Windows
+    procedure LockSpin; // called by the Lock method when inlined
   public
     /// to be called if the instance has not been filled with 0
     // - e.g. not needed if TMultiLightLock is defined as a class field
@@ -7505,7 +7525,7 @@ begin
     else
     begin
       fn := aFileName;
-      ext := ExtractFileExt(aFileName);
+      ext := ExtractExt(aFileName);
       for retry := 1 to aAliases do
       begin
         if IsSharedViolation(err) then
@@ -7869,6 +7889,28 @@ begin
   if WithoutDot then
     inc(i);
   result := copy(FileName, i, 100);
+end;
+
+function HasExt(const FileName: TFileName): boolean;
+var
+  i: PtrInt;
+begin
+  i := GetLastDelim(FileName, ord('.'));
+  result := (i > 1) and
+            (FileName[i] = '.');
+end;
+
+function SameExt(const FileName: TFileName; const Exts: array of TFileName;
+  WithoutDot: boolean): PtrInt;
+var
+  ext: TFileName;
+begin
+  ext := ExtractExt(FileName, WithoutDot);
+  if ext <> '' then
+    for result := 0 to high(Exts) do
+      if CompareText(ext, Exts[result]) = 0 then
+        exit;
+  result := -1;
 end;
 
 function ExtractExtU(const FileName: RawUtf8; WithoutDot: boolean): RawUtf8;
@@ -8666,12 +8708,12 @@ end;
 
 procedure ConsoleWriteRaw(const Text: RawUtf8; NoLineFeed: boolean);
 begin
-  ConsoleWriteBuf(pointer(Text), length(Text), ccLightGray, NoLineFeed, true);
+  ConsoleWriteBuf(pointer(Text), length(Text), ccDefault, NoLineFeed, true);
 end;
 
 procedure ConsoleWriteLn;
 begin
-  ConsoleWrite(CRLF, ccLightGray, {nolinefeed=}true, {nocolor=}true);
+  ConsoleWrite(CRLF, ccDefault, {nolinefeed=}true, {nocolor=}true);
 end;
 
 function ConsoleReadBody: RawByteString;
@@ -10460,13 +10502,13 @@ end;
 procedure TMultiLightLock.Init;
 begin
   Flags := 0;
-  ThreadID := TThreadID(0);
+  ThreadID := nil;
 end;
 
 procedure TMultiLightLock.Done;
 begin
-  Flags := PtrUInt(-1);
-  ThreadID := TThreadID(0); // invalid combination to let TryLock fail
+  Flags := MaxInt;
+  ThreadID := nil; // invalid combination to let TryLock fail
 end;
 
 procedure TMultiLightLock.Lock;
@@ -10478,15 +10520,15 @@ end;
 procedure TMultiLightLock.UnLock;
 begin
   if Flags = 1 then
-    ThreadID := TThreadID(0); // paranoid
+    ThreadID := nil; // paranoid
   LockedDec(Flags, 1);
 end;
 
 function TMultiLightLock.TryLock: boolean;
 var
-  tid: TThreadID;
+  tid: pointer;
 begin
-  tid := GetCurrentThreadId;
+  tid := pointer(GetCurrentThreadId);
   if Flags = 0 then    // is not locked
     if LockedExc(Flags, {to=}1, {from=}0) then // try atomic acquisition
     begin
@@ -10507,7 +10549,7 @@ end;
 procedure TMultiLightLock.ForceLock;
 begin
   Flags := MaxInt; // forced acquisition, whatever the current state is
-  ThreadID := GetCurrentThreadId;
+  ThreadID := pointer(GetCurrentThreadId);
 end;
 
 function TMultiLightLock.IsLocked: boolean;

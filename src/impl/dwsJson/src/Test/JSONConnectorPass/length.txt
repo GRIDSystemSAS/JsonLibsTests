@@ -1,4 +1,0 @@
-2
-hello
-Undefined
-1

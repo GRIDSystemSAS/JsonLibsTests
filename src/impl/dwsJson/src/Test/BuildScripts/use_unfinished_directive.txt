@@ -1,3 +1,0 @@
-Errors >>>>
-Syntax Error: Compiler switch "DEF" unknown [line: 5, column: 3, file: UnfinishedDirective]
-Syntax Error: Unknown name "!" [line: 5, column: 1]

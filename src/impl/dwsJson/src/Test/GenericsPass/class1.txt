@@ -1,3 +1,0 @@
-TTest<Integer,String>
-123
-abc

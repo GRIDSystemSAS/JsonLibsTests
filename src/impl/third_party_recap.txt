@@ -1,0 +1,21 @@
+Lib                                      Upstream                                         Updated
+---------------------------------------  -----------------------------------------------  ----------
+gsJson (gsJson (native))                 https://github.com/GRIDSystemSAS/JsonLibsTests
+embDelphiJson (Embarcadero System.JSON)
+bero (PasJSON)                           https://github.com/BeRo1985/pasjson              2026-05-05
+chimera (Chimera JSON)
+dwsJson (DWScript JSON)                  https://github.com/EricGrange/DWScript           2026-05-05
+dynamicDataObjects (DataObjects2)
+grijjyBson (Grijjy.Foundation BSON)      https://github.com/grijjy/GrijjyFoundation       2026-05-05
+jdo (JsonDataObjects)                    https://github.com/ahausladen/JsonDataObjects    2026-05-05
+json4Delphi (JSON4Delphi (Jsons))
+jsonDoc                                  https://github.com/stijnsanders/jsonDoc          2026-05-05
+lkJson
+mcJson
+mormot (mORMot 2)                        https://github.com/synopse/mORMot2               2026-05-05
+myJson
+neslibJson (Neslib.Json)                 https://github.com/neslib/Neslib.Json            2026-05-05
+superObject                              https://github.com/hgourvest/superobject
+uJson
+vsoftYaml (VSoft.YAML)                   https://github.com/VSoftTechnologies/VSoft.YAML  2026-05-05
+xSuperObject                             https://github.com/onryldz/x-superobject         2026-05-05

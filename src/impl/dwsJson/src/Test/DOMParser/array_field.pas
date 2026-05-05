@@ -1,1 +1,0 @@
-PrintLn(a[i].a[j].x)

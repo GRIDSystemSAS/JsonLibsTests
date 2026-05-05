@@ -1,3 +1,0 @@
-say test
-HELLOtest
-say HELLO

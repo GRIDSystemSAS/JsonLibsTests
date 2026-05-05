@@ -502,6 +502,7 @@ type
   TByteToWideChar = array[byte] of WideChar;
   /// type of mormot.core.unicode TNormTable lookup table
   TAnsiCharToAnsiChar = array[AnsiChar] of AnsiChar;
+  PAnsiCharToAnsiChar = ^TAnsiCharToAnsiChar;
   /// type of a lookup table used for fast two-digit chars conversion
   TAnsiCharToWord = array[AnsiChar] of word;
   PAnsiCharToWord = ^TAnsiCharToWord;
@@ -748,6 +749,13 @@ type
   PStrRec = ^TStrRec;
   PDynArrayRec = ^TDynArrayRec;
 
+  /// store a fake RawUtf8 constant string with up to 7 chars
+  TStrRecConst = record
+    Header: TStrRec;
+    Text: array[0 .. 7] of AnsiChar;
+  end;
+  PStrRecConst = ^TStrRecConst;
+
 const
   /// codePage offset = string header size
   // - used to calc the beginning of memory allocation of a string
@@ -815,6 +823,7 @@ const
   GUID_NULL: TGuid = '{00000000-0000-0000-0000-000000000000}';
 
   NULL_LOW   = ord('n') + ord('u') shl 8 + ord('l') shl 16 + ord('l') shl 24;
+  NULL_HI    = ord('N') + ord('U') shl 8 + ord('L') shl 16 + ord('L') shl 24;
   FALSE_LOW  = ord('f') + ord('a') shl 8 + ord('l') shl 16 + ord('s') shl 24;
   FALSE_LOW2 = ord('a') + ord('l') shl 8 + ord('s') shl 16 + ord('e') shl 24;
   TRUE_LOW   = ord('t') + ord('r') shl 8 + ord('u') shl 16 + ord('e') shl 24;
@@ -940,6 +949,12 @@ procedure FastAssignNewNotVoid(var d; s: pointer = nil); overload;
 // - caller should fill the pointer result, and eventually call FastAssignNew()
 function FastNewString(len: PtrInt; codepage: PtrInt = CP_RAWBYTESTRING): pointer;
   {$ifdef HASSAFEFPCINLINE}inline;{$endif}
+
+procedure FastSetStrRec(var Rec: TStrRec; Len: TStrLen);
+  {$ifdef HASINLINE}inline;{$endif}
+
+/// fill a RawUtf8 constant with up to 7 chars of UTF-8 content
+function FastSetConst(var S; var Rec: TStrRecConst; P: pointer; Len: TStrLen): PUtf8Char;
 
 /// ensure the supplied variable will have a CP_UTF8 code page
 // - making it unique if needed
@@ -2486,6 +2501,9 @@ type
   /// pointer to 128-bit hash map variable record
   PHash128Rec = ^THash128Rec;
 
+  /// store several 160-bit hash values
+  THash160DynArray = array of THash160;
+
   /// map an infinite array of 256-bit hash values
   // - each item consumes 32 bytes of memory
   THash256Array = array[ 0 .. MaxInt div SizeOf(THash256) - 1 ] of THash256;
@@ -3307,8 +3325,10 @@ procedure TrimU(const S: RawUtf8; var Dest: RawUtf8); overload;
 procedure TrimSelf(var S: RawUtf8);
 
 /// single-allocation (therefore faster) alternative to Trim(copy())
-procedure TrimCopy(const S: RawUtf8; start, count: PtrInt;
-  var result: RawUtf8);
+procedure TrimCopy(const S: RawUtf8; start, count: PtrInt; var result: RawUtf8);
+
+/// internal function used by TrimCopy/TrimLeftCopy/TrimRightCopy wrappers
+procedure TrimCopyAssign(P: PAnsiChar; start, len: PtrInt; var result: RawUtf8);
 
 /// faster dedicated RawUtf8 version of delete(s, 1, 1) to avoid realloc
 procedure TrimFirstChar(var S: RawUtf8);
@@ -4021,6 +4041,9 @@ var
 // - so the hash value may change on another computer or after program restart
 function DefaultHash(const s: RawByteString; crc: cardinal = 0): cardinal; overload;
   {$ifdef HASINLINE}inline;{$endif}
+
+/// compute a 32-bit hash of Trim(string) using DefaultHasher()
+function DefaultHashTrim(const s: RawByteString; crc: cardinal = 0): cardinal;
 
 /// compute a 32-bit hash of any array of bytes using DefaultHasher()
 // - so the hash value may change on another computer or after program restart
@@ -5292,6 +5315,29 @@ begin
     FastAssignNewNotVoid(s, result);
 end;
 
+procedure FastSetStrRec(var Rec: TStrRec; Len: TStrLen);
+begin
+  {$ifdef HASCODEPAGE}
+  {$ifdef FPC}
+  Rec.codePageElemSize := CP_UTF8 + (1 shl 16);
+  {$else}
+  PCardinal(@Rec.codePage)^ := cardinal(CP_UTF8) + (1 shl 16);
+  {$endif FPC}
+  {$endif HASCODEPAGE}
+  Rec.refCnt := -1; // make it constant, out of the MM allocation space
+  Rec.length := Len;
+end;
+
+function FastSetConst(var S; var Rec: TStrRecConst; P: pointer; Len: TStrLen): PUtf8Char;
+begin
+  FastSetStrRec(Rec.Header, Len);
+  result := @Rec.Text;
+  if P <> nil then
+    PInt64(result)^ := PInt64(P)^; // up to 7 chars
+  result[Len] := #0;
+  pointer(S) := result;
+end;
+
 {$ifdef HASVARUSTRING}
 procedure FastSynUnicode(var s: SynUnicode; p: pointer; len: PtrInt);
 var
@@ -5307,7 +5353,7 @@ begin
   {$ifdef FPC}
   rec^.codePageElemSize := CP_UTF16 + (SizeOf(WideChar) shl 16);
   {$else}
-  PCardinal(@rec^.codePage)^ := CP_UTF16 + (SizeOf(WideChar) shl 16);
+  PCardinal(@rec^.codePage)^ := cardinal(CP_UTF16) + (SizeOf(WideChar) shl 16);
   {$endif FPC}
   rec^.refCnt := 1;
   rec^.length := len shr 1; // length as WideChar count
@@ -5845,17 +5891,17 @@ begin
     result := FindPropName(@Names[0], Name, result + 1);
 end;
 
-function Hex2Dec(c: AnsiChar): ShortInt; {$ifdef HASINLINE} inline; {$endif}
+function Hex2Dec(c: AnsiChar): integer; {$ifdef HASINLINE} inline; {$endif}
 begin
   result := ord(c);
-  case c of // fast enough for a few chars
-    '#':
+  case result of // fast enough for a few chars
+    ord('#'):
       result := 0; // handle '#' as '0' within the hexadecimal buffer
-    '0'..'9':
+    ord('0') .. ord('9'):
       dec(result, ord('0'));
-    'A'..'Z':
+    ord('A') .. ord('Z'):
       dec(result, ord('A') - 10);
-    'a'..'z':
+    ord('a') .. ord('z'):
       dec(result, ord('a') - 10);
   else
     result := -1;
@@ -9951,8 +9997,19 @@ begin
 end;
 {$endif PUREMORMOT2}
 
-procedure TrimCopy(const S: RawUtf8; start, count: PtrInt;
-  var result: RawUtf8); // faster alternative to TrimU(copy())
+procedure TrimCopyAssign(P: PAnsiChar; start, len: PtrInt; var result: RawUtf8);
+begin // caller ensured P <> nil and points to original S: RawUtf8
+  if len > 0 then
+    if (start = 0) and
+       (len = PStrLen(P - _STRLEN)^) then
+      result := RawUtf8(pointer(P)) // no memory allocation needed
+    else
+      FastSetString(result, P + start, len)
+  else
+    FastAssignNew(result); // done last because result could point to S
+end;
+
+procedure TrimCopy(const S: RawUtf8; start, count: PtrInt; var result: RawUtf8);
 var
   len: PtrInt;
 begin
@@ -9962,27 +10019,24 @@ begin
       start := 1;
     len := Length(S);
     while (start <= len) and
-          (S[start] <= ' ') do
+          (S[start] <= ' ') do // trim left
     begin
       inc(start);
       dec(count);
     end;
     dec(start);
-    dec(len,start);
+    dec(len, start);
     if count < len then
       len := count;
     while len > 0 do
-      if S[start + len] <= ' ' then
+      if S[start + len] <= ' ' then // trim right
         dec(len)
       else
         break;
-    if len > 0 then
-    begin
-      FastSetString(result, @PByteArray(S)[start], len);
-      exit;
-    end;
-  end;
-  FastAssignNew(result); // done last becase result could point to S
+  end
+  else
+    len := 0;
+  TrimCopyAssign(pointer(S), start, len, result);
 end;
 
 function Split(const Str, SepStr: RawUtf8; StartPos: PtrInt): RawUtf8;
@@ -10800,12 +10854,12 @@ begin
     ERMSB_MIN_SIZE_FWD := 4096; // "on 32-bit strings have to be at least 4KB"
     // backward rep movsd has no ERMS optimization so degrades performance
   {$endif WITH_ERMS}
-  {$endif HASNOSSE2}
   if cfSSE2 in CpuFeatures then
   begin
     StrLen  := @StrLenSSE2;
     StrLenW := @StrLenWSSE2;
   end;
+  {$endif HASNOSSE2}
   {$endif ASMX86NOTPIC}
 end;
 
@@ -12703,6 +12757,28 @@ end;
 function DefaultHash(const s: RawByteString; crc: cardinal): cardinal;
 begin
   result := DefaultHasher(crc, pointer(s), length(s));
+end;
+
+function DefaultHashTrim(const s: RawByteString; crc: cardinal): cardinal;
+var
+  p: PAnsiChar;
+  l: PtrInt;
+begin
+  p := pointer(s);
+  l := length(s);
+  if p <> nil then
+  begin
+    while (l > 0) and
+          (p^ <= ' ') do // trim left in-place
+    begin
+      inc(p);
+      dec(l);
+    end;
+    while (l > 0) and
+          (p[l - 1] <= ' ') do // trim right in-place
+      dec(l);
+  end;
+  result := DefaultHasher(crc, p, l);
 end;
 
 function DefaultHash(const b: TBytes; crc: cardinal): cardinal;

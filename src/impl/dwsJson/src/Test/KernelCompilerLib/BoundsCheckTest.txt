@@ -1,6 +1,0 @@
-Write index test
-KCL: Buffer overflow during write (index).
-Read index test
-KCL: Buffer overflow during read (index).
-Write capacity test
-KCL: Buffer overflow during write (index).

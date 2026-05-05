@@ -6,7 +6,6 @@
 ///
 ///
 ///*******************************************************
-
 unit gsJson.tests.main;
 
 interface
@@ -21,7 +20,6 @@ uses
   gs.json.impl.delphiJson,
   gs.json.impl.beroJson,
   gs.json.impl.lkJson,
-  gs.json.impl.jsonTools,
   gs.json.impl.jsonDoc,
   gs.json.impl.jdo,
   gs.Json.Impl.mcJson,
@@ -94,7 +92,7 @@ type
     procedure test_arrayAndVariousGet;
     [Test]
     [TestCase('Test Put A','Hello World','')]
-    [TestCase('Test Put B','���������&','')]
+    [TestCase('Test Put B','ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½&','')]
     procedure Test_PutAndGetStr(const a : string);
 
     [Test]
@@ -193,13 +191,6 @@ type
 
   [TestFixture]
   TgsJson_lkJson_TestProject = class(TgsJson_gsJson_TestProject)
-  public
-    [Setup]
-    procedure Setup; override;
-  end;
-
-  [TestFixture]
-  TgsJson_jsonTools_TestProject = class(TgsJson_gsJson_TestProject)
   public
     [Setup]
     procedure Setup; override;
@@ -675,13 +666,6 @@ begin
   ljson := CreateJson('lkjson');
 end;
 
-{ TgsJson_jsonTools_TestProject }
-
-procedure TgsJson_jsonTools_TestProject.Setup;
-begin
-  ljson := CreateJson('jsontools');
-end;
-
 { TgsJson_jsonDoc_TestProject }
 
 procedure TgsJson_jsonDoc_TestProject.Setup;
@@ -796,7 +780,6 @@ initialization
   TDUnitX.RegisterTestFixture(TgsJson_embarcaderoDelphiJson_TestProject);
   TDUnitX.RegisterTestFixture(TgsJson_beroJson_TestProject);
   TDUnitX.RegisterTestFixture(TgsJson_lkJson_TestProject);
-  TDUnitX.RegisterTestFixture(TgsJson_jsonTools_TestProject);
   TDUnitX.RegisterTestFixture(TgsJson_jsonDoc_TestProject);
   TDUnitX.RegisterTestFixture(TgsJson_jdo_TestProject);
   TDUnitX.RegisterTestFixture(TgsJson_xSuperObject_TestProject);

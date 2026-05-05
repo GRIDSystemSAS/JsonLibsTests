@@ -579,10 +579,10 @@ type
     // - will also accept JSON '"string"' as input as if it were 'string'
     // - return -1 if not found, or if RTTI's MinValue is not 0
     function GetEnumNameValue(Value: PUtf8Char; ValueLen: PtrInt;
-      AlsoTrimLowerCase: boolean = true): integer; overload;
+      AlsoTrimLowerCase: boolean = true): PtrInt; overload;
     /// get the corresponding enumeration ordinal value, from its trimmed name
     function GetEnumNameValueTrimmed(Value: PUtf8Char; ValueLen: PtrInt;
-      CaseSensitive: boolean): integer;
+      CaseSensitive: boolean): PtrInt;
     /// get the corresponding enumeration name, without the first lowercase chars
     // (otDone -> 'Done')
     // - Value will be converted to the matching ordinal value (byte or word)
@@ -608,7 +608,7 @@ type
     /// get the corresponding enumeration ordinal value, from its name without
     // its first lowercase chars ('Done' will find otDone e.g.)
     // - return -1 if not found, or if RTTI's MinValue is not 0
-    function GetEnumNameTrimedValue(Value: PUtf8Char; ValueLen: integer = 0): integer; overload;
+    function GetEnumNameTrimedValue(Value: PUtf8Char; ValueLen: integer = 0): PtrInt; overload;
     /// compute how many bytes this type will use to be stored as a enumerate
     function SizeInStorageAsEnum: integer;
       {$ifdef HASSAFEINLINE}inline;{$endif}
@@ -1912,6 +1912,12 @@ procedure StringClearSeveral(v: PPointer; n: PtrInt);
 procedure RawUtf8DynArrayClear(var Value: TRawUtf8DynArray);
   {$ifdef HASINLINE}inline;{$endif}
 
+/// check if the TypeInfo() points to a "RawUtf8" kind of type
+// - e.g. returns true for TypeInfo(RawUtf8) or TypeInfo(Utf8String) or other
+// sub-types defined as "type aNewType = type RawUtf8"
+function IsRawUtf8(Info: PRttiInfo): boolean;
+  {$ifdef HASINLINE}inline;{$endif}
+
 /// check if the TypeInfo() points to an "array of RawUtf8"
 // - e.g. returns true for TypeInfo(TRawUtf8DynArray) or other sub-types
 // defined as "type aNewType = type TRawUtf8DynArray" or "= array of RawUtf8"
@@ -2164,6 +2170,13 @@ const
   /// '"' + UTF-8 encoded \uFFF0 special code to mark Base64 binary as JSON string
   JSON_BASE64_MAGIC_QUOTE_C = ord('"') + cardinal(JSON_BASE64_MAGIC_C) shl 8;
 
+  // some other constants used for fast pattern recognition
+  _ID16     = ord('I') + ord('D') shl 8;
+  _ROW24    = ord('R') + ord('O') shl 8 + ord('W') shl 16;
+  _ROWI32   = _ROW24 + ord('I') shl 24;
+  SQUOT_16  = ord('''') + ord('''') shl 8;
+  DOLLAR_16 = ord('$') + ord('$') shl 8;
+
   /// simple lookup to the TRttiParserType of a complex type
   PTC_PT: array[TRttiParserComplexType] of TRttiParserType = (
     ptNone,      // pctNone
@@ -2218,64 +2231,6 @@ const
     SizeOf(pointer),  //  ptInterface
     SizeOf(pointer),  //  ptPUtf8Char
     0 );              //  ptCustom
-
-  /// type definition name lookup to the TRttiParserType values
-  // - ptComplexTypes types should see PTC_NAME[] constant
-  PT_NAME: array[TRttiParserType] of RawUtf8 = (
-    '',               //  ptNone
-    '',               //  ptArray
-    'boolean',        //  ptBoolean
-    'byte',           //  ptByte
-    'cardinal',       //  ptCardinal
-    'currency',       //  ptCurrency
-    'double',         //  ptDouble
-    'extended',       //  ptExtended
-    'Int64',          //  ptInt64
-    'integer',        //  ptInteger
-    'QWord',          //  ptQWord
-    'RawByteString',  //  ptRawByteString
-    'RawJson',        //  ptRawJson
-    'RawUtf8',        //  ptRawUtf8
-    '',               //  ptRecord
-    'single',         //  ptSingle
-    'string',         //  ptString
-    'SynUnicode',     //  ptSynUnicode
-    'TDateTime',      //  ptDateTime
-    'TDateTimeMS',    //  ptDateTimeMS
-    'TGuid',          //  ptGuid
-    'THash128',       //  ptHash128
-    'THash256',       //  ptHash256
-    'THash512',       //  ptHash512
-    '',               //  ptOrm
-    '',               //  ptTimeLog
-    'UnicodeString',  //  ptUnicodeString
-    'TUnixTime',      //  ptUnixTime
-    'TUnixMSTime',    //  ptUnixMSTime
-    'variant',        //  ptVariant
-    'WideString',     //  ptWideString
-    'WinAnsi',        //  ptWinAnsi
-    'word',           //  ptWord
-    '',               //  ptEnumeration
-    '',               //  ptSet
-    '',               //  ptClass
-    '',               //  ptDynArray
-    '',               //  ptInterface
-    'PUtf8Char',      //  ptPUtf8Char
-    '');              //  ptCustom
-
-  /// type definition name lookup to the TRttiParserComplexType values
-  // - for ptComplexTypes types, with PT_NAME[]=''
-  // - ptcSpecificClassID returns '' since T....ID types are variable
-  PTC_NAME: array[TRttiParserComplexType] of RawUtf8 = (
-    '',                            // pctNone
-    'TTimeLog',                    // pctTimeLog
-    'TCreateTime',                 // pctCreateTime
-    'TModTime',                    // pctModTime
-    'TID',                         // pctID
-    '',                            // pctSpecificClassID
-    'TRecordReference',            // pctRecordReference
-    'TRecordReferenceToBeDeleted', // pctRecordReferenceToBeDeleted
-    'TRecordVersion');             // pctRecordVersion
 
 /// retrieve the text name of one TRttiParserType enumerate
 function ToText(t: TRttiParserType): PShortString; overload;
@@ -2781,7 +2736,7 @@ type
       PathDelim: AnsiChar = '.'): PRttiCustomProp;
     /// search an enumeration/set value from its UTF-8 text representation
     // - first search by Cache.EnumCustomText, then by (trimmed) RTTI names
-    function GetEnumFromText(Value: PUtf8Char; ValueLen: PtrInt): integer;
+    function GetEnumFromText(Value: PUtf8Char; ValueLen: PtrInt): PtrInt;
     /// change the identifiers of enumerate/set type using a proper casing
     // - most common are scLowerCaseFirst (aka camelCase, for API), scSnakeCase
     // (POSIX/IT conventions) or even scKebabCase (RFC/networking)
@@ -3812,7 +3767,7 @@ begin
 end;
 
 function TRttiEnumType.GetEnumNameValue(Value: PUtf8Char; ValueLen: PtrInt;
-  AlsoTrimLowerCase: boolean): integer;
+  AlsoTrimLowerCase: boolean): PtrInt;
 begin
   result := -1;
   if (@self = nil) or
@@ -3830,14 +3785,14 @@ begin
     if ValueLen = 0 then
       exit;
   end;
-  result := FindShortStringListExact(NameList, MaxValue, Value, ValueLen);
+  result := FindShortStringListNoTrim(NameList, MaxValue, Value, ValueLen);
   if (result < 0) and
      AlsoTrimLowerCase then
     result := FindShortStringListTrimLowerCase(NameList, MaxValue, Value, ValueLen);
 end;
 
 function TRttiEnumType.GetEnumNameValueTrimmed(Value: PUtf8Char; ValueLen: PtrInt;
-  CaseSensitive: boolean): integer;
+  CaseSensitive: boolean): PtrInt;
 begin
   if (@self <> nil) and
      (Value <> nil) and
@@ -4008,7 +3963,7 @@ begin
   result := GetEnumNameTrimedValue(@EnumName[1], ord(EnumName[0]));
 end;
 
-function TRttiEnumType.GetEnumNameTrimedValue(Value: PUtf8Char; ValueLen: integer): integer;
+function TRttiEnumType.GetEnumNameTrimedValue(Value: PUtf8Char; ValueLen: integer): PtrInt;
 begin
   if (Value = nil) or
      (MinValue <> 0) then
@@ -4019,7 +3974,7 @@ begin
       ValueLen := StrLen(Value);
     result := FindShortStringListTrimLowerCase(NameList, MaxValue, Value, ValueLen);
     if result < 0 then
-      result := FindShortStringListExact(NameList, MaxValue, Value, ValueLen);
+      result := FindShortStringListNoTrim(NameList, MaxValue, Value, ValueLen);
   end;
 end;
 
@@ -4404,7 +4359,7 @@ begin
   else
     result := CP_UTF8; // default is UTF-8
   {$else}
-  if @self = TypeInfo(RawUtf8) then
+  if @self = TypeInfo(RawUtf8) then // = TypeInfo(Utf8String)
     result := CP_UTF8 // most common case
   else if @self = TypeInfo(WinAnsiString) then
     result := CP_WINANSI
@@ -6217,15 +6172,14 @@ var
   i: PtrInt;
 begin
   info := aTypeInfo^.BaseType; // works for rkEnumeration and rkSet
-  if info <> nil then
+  if info = nil then
+    exit;
+  p := info^.NameList;
+  for i := info^.MinValue to info^.MaxValue do
   begin
-    p := info^.NameList;
-    for i := info^.MinValue to info^.MaxValue do
-    begin
-      aDest^ := p;
-      p := @PByteArray(p)^[ord(p^[0]) + 1];
-      inc(aDest);
-    end;
+    aDest^ := p;
+    p := @PByteArray(p)^[ord(p^[0]) + 1];
+    inc(aDest);
   end;
 end;
 
@@ -6237,15 +6191,14 @@ var
   i: PtrInt;
 begin
   info := aTypeInfo^.BaseType; // works for rkEnumeration and rkSet
-  if info <> nil then
+  if info = nil then
+    exit;
+  p := info^.NameList;
+  for i := info^.MinValue to info^.MaxValue do
   begin
-    p := info^.NameList;
-    for i := info^.MinValue to info^.MaxValue do
-    begin
-      ShortTrim(p, aDest^, aKind);
-      p := @PByteArray(p)^[ord(p^[0]) + 1];
-      inc(aDest);
-    end;
+    ShortTrim(p, aDest^, aKind);
+    p := @PByteArray(p)^[ord(p^[0]) + 1];
+    inc(aDest);
   end;
 end;
 
@@ -6433,7 +6386,7 @@ end;
 procedure SetNamesValue(SetNames: PShortString; MinValue, MaxValue: integer;
   Value: PUtf8Char; ValueLen: PtrInt; var Result: QWord);
 var
-  i: integer;
+  i: PtrInt;
 begin
   if (Value = nil) or
      (ValueLen = 0) then
@@ -6449,7 +6402,7 @@ begin
   if MaxValue > 63 then
     MaxValue := 63; // no need to search more than the Result number of bits
   if Value^ in ['a'..'z'] then
-    i := FindShortStringListExact(SetNames, MaxValue, Value, ValueLen)
+    i := FindShortStringListNoTrim(SetNames, MaxValue, Value, ValueLen)
   else
     i := -1;
   if i < 0 then
@@ -6779,19 +6732,18 @@ begin
   FastDynArrayClear(@Value, TypeInfo(RawUtf8));
 end;
 
-function IsRawUtf8DynArray(Info: PRttiInfo): boolean;
-var
-  item: PRttiInfo;
+function IsRawUtf8(Info: PRttiInfo): boolean;
 begin
-  result := false;
-  if (Info = nil) or
-     (Info^.Kind <> rkDynArray) then
-    exit;
-  item := Info^.DynArrayItemType;
-  if (item <> nil) and
-     (item^.Kind = rkLString) and
-     (item^.AnsiStringCodePage = CP_UTF8) then
-    result := true;
+  result := (Info <> nil) and
+            (Info^.Kind = rkLString) and
+            (Info^.AnsiStringCodePage = CP_UTF8);
+end; // works for RawUtf8/Utf8String with basic Delphi 7/2007 support
+
+function IsRawUtf8DynArray(Info: PRttiInfo): boolean;
+begin
+  result := (Info <> nil) and
+            (Info^.Kind = rkDynArray) and
+            IsRawUtf8(Info^.DynArrayItemType);
 end;
 
 procedure RecordClearSeveral(v: PAnsiChar; info: PRttiInfo; n: integer);
@@ -7732,52 +7684,21 @@ begin
     result := PT_INFO[pt];
 end;
 
-// called from TRttiCustomList.RegisterTypeFromName and TRttiCustom.Create
-// if Rtti.Find(Name, NameLen) did not have any match
-// -> detect array/record keywords, integer/cardinal types, T*ID pattern
-function AlternateTypeNameToRttiParserType(Name: PUtf8Char; NameLen: integer;
-  Complex: PRttiParserComplexType = nil; Kind: TRttiKind = rkUnknown): TRttiParserType;
-begin
-  result := ptNone;
-  if Complex <> nil then
-    Complex^ := pctNone;
-  case NameLen of
-    5:
-      if IdemPropNameUSameLenNotNull(Name, 'array', 5) then
-        result := ptArray
-      else if IdemPropNameUSameLenNotNull(Name, 'TDate', 5) then
-        result := ptDateTime
-      else if IdemPropNameUSameLenNotNull(Name, 'TGuid', 5) then
-        result := ptGuid; // Delphi defines uppercase TGUID in System.pas
-    6:
-      {$ifdef FPC}
-      // TypeInfo(string)=TypeInfo(AnsiString) on FPC
-      if IdemPropNameUSameLenNotNull(Name, 'string', 6) then
-        result := ptString
-      else
-      {$endif FPC}
-      if IdemPropNameUSameLenNotNull(Name, 'record', 6) then
-        result := ptRecord;
-    // TypeInfo(integer/cardinal)=TypeInfo(LongInt/LongWord) on FPC
-    7:
-      if IdemPropNameUSameLenNotNull(Name,
-          {$ifdef FPC}'integer'{$else}'longint'{$endif}, 7) then
-        result := ptInteger;
-    8:
-      if IdemPropNameUSameLenNotNull(Name,
-           {$ifdef FPC}'cardinal'{$else}'longword'{$endif}, 8) then
-        result := ptCardinal;
-  end;
-  if (result = ptNone) and
-     (Complex <> nil) and
-     (Kind = rkInt64) and
-     (NameLen < 200) and
-     (Name[0] = 'T') and // T...ID pattern in name?
-     (PWord(@Name[NameLen - 2])^ and $dfdf = ord('I') + ord('D') shl 8) then
-  begin
-    result := ptOrm;
-    Complex^ := pctSpecificClassID;
-  end;
+const
+  _TypeNames: PAnsiChar = // fast brute force search in L1 cache
+    #7'RawUtf8'#5'array'#6'record'#5'TDate'#5'TGuid'#6'PtrInt'#7'PtrUInt' +
+    {$ifdef FPC} #6'string'#7'integer'#8'cardinal' {$else}
+                 #7'longint'#8'longword' {$endif} + #9'TFileName';
+  _TypeParser: array[0 .. 10 {$ifdef FPC} + 1 {$endif} ] of TRttiParserType = (
+    ptNone, ptRawUtf8, ptArray, ptRecord, ptDateTime, ptGuid,
+    {$ifdef CPU64} ptInt64, ptQWord, {$else} ptInteger, ptCardinal, {$endif}
+    {$ifdef FPC} ptString, {$endif} ptInteger, ptCardinal, ptString);
+
+function KnownTypeName(Name: PUtf8Char; NameLen: PtrInt): TRttiParserType;
+  {$ifdef HASINLINE}inline;{$endif}
+begin // weak/alias type definition have no TypeInfo() with their own name
+  result := _TypeParser[FindShortStringListNoTrim(@_TypeNames[0],
+              pred(high(_TypeParser)), Name, NameLen) + 1];
 end;
 
 // called internally by TRttiCustom.Create - can't use Rtti.RegisterType()
@@ -7803,20 +7724,29 @@ begin
   end;
   for c := succ(low(c)) to high(c) do
     if PTC_INFO[c] = Info then // complex ORM types as set by mormot.orm.base
-      if PTC_PT[c] <> ptNone then
+    begin
+      result := PTC_PT[c];
+      if result <> ptNone then
       begin
-        result := PTC_PT[c];
         if Complex <> nil then
           Complex^ := c;
         exit;
-      end
-      else
-        break;
+      end;
+      break;
+    end;
   // array/record keywords, integer/cardinal FPC types, T*ID pattern
-  result := AlternateTypeNameToRttiParserType(
-    @Info^.RawName[1], ord(Info^.RawName[0]), Complex, Info^.Kind);
+  result := KnownTypeName(@Info^.RawName[1], ord(Info^.RawName[0]));
   if result <> ptNone then
     exit; // found by name
+  if (Complex <> nil) and
+     (Info^.Kind = rkInt64) and
+     (Info^.RawName[1] = 'T') and
+     (PCardinal(@Info^.RawName[ord(Info^.RawName[0]) - 1])^ and $dfdf = _ID16) then
+  begin
+    result := ptOrm;
+    Complex^ := pctSpecificClassID; // T...ID pattern in name
+    exit;
+  end;
   // fallback to the closed known type, using RTTI
   case Info^.Kind of
   {$ifdef FPC}
@@ -8684,7 +8614,7 @@ begin
       if p^.Name <> '' then
       begin
         inc(result);
-        names := {%H-}names + '"' + p^.Name + '",';  // include trailing ,
+        Append(names, ['"', p^.Name, '",']);  // include trailing ,
       end;
       inc(p);
       dec(n);
@@ -9326,7 +9256,7 @@ begin
   if fCache.Info <> nil then
     case aParser of
       ptGuid:
-        fName := PT_NAME[aParser]; // normalize for Delphi
+        fName := 'TGuid'; // normalize for Delphi
     else
       ShortStringToAnsi7String(fCache.Info.Name^, fName);
     end;
@@ -9689,7 +9619,7 @@ begin
   result := -1;
 end;
 
-function TRttiCustom.GetEnumFromText(Value: PUtf8Char; ValueLen: PtrInt): integer;
+function TRttiCustom.GetEnumFromText(Value: PUtf8Char; ValueLen: PtrInt): PtrInt;
 begin
   result := -1;
   if (self = nil) or
@@ -9702,7 +9632,7 @@ begin
     if result >= 0 then
       exit;
   end;
-  result := FindShortStringListExact(Cache.EnumList, Cache.EnumMax, Value, ValueLen);
+  result := FindShortStringListNoTrim(Cache.EnumList, Cache.EnumMax, Value, ValueLen);
   if result < 0 then
     result := FindShortStringListTrimLowerCase(Cache.EnumList, Cache.EnumMax, Value, ValueLen);
 end;
@@ -10062,7 +9992,6 @@ begin
 end; // no need to set other fields like Name
 
 
-
 { TRttiCustomList }
 
 constructor TRttiCustomList.Create;
@@ -10413,31 +10342,29 @@ begin
   end;
 end;
 
+procedure AddPair(var List: TPointerDynArray; Instance: TRttiCustom; Info: PRttiInfo);
+var
+  n: PtrInt;
+begin
+  n := length(List);
+  SetLength(List, n + 2);
+  List[n] := Info;
+  List[n + 1] := Instance;
+end;
 
 procedure TRttiCustomList.AddToPairs(Instance: TRttiCustom; Info: PRttiInfo);
-
-  procedure AddPair(var List: TPointerDynArray);
-  var
-    n: PtrInt;
-  begin
-    n := length(List);
-    SetLength(List, n + 2);
-    List[n] := Info;
-    List[n + 1] := Instance;
-  end;
-
 var
   k: PRttiCustomListPairs;
 begin
   k := @fHashTable[RK_TOSLOT[Info^.Kind]];
   k^.Safe.WriteLock; // needed when resizing k^.HashInfo/HashName[]
   try
-    AddPair(k^.HashInfo[xxHash32Mixup(PtrUInt(Info)) and RTTIHASH_MAX]);
+    AddPair(k^.HashInfo[xxHash32Mixup(PtrUInt(Info)) and RTTIHASH_MAX], Instance, Info);
     {$ifdef FPC} // FPC extended RTTI generates no name for nested plain records
     if Info.RawName[0] <> #0 then
     {$endif FPC}
     if PosExChar('$', Instance.Name) = 0 then // e.g. 'TArray$1$crcA5831B1D'
-      AddPair(k^.HashName[RttiHashName(@Info.RawName[1], ord(Info.RawName[0]))]);
+      AddPair(k^.HashName[RttiHashName(@Info.RawName[1], ord(Info.RawName[0]))], Instance, Info);
     ObjArrayAddCount(fInstances, Instance, Count); // to release memory
     inc(Counts[Info^.Kind]); // Instance.Kind is not available from DoRegister
   finally
@@ -10509,7 +10436,7 @@ begin
   if result = nil then
   begin
     // array/record keywords, integer/cardinal FPC types not available by Find()
-    pt := AlternateTypeNameToRttiParserType(Name, NameLen);
+    pt := KnownTypeName(Name, NameLen);
     if ParserType <> nil then
       ParserType^ := pt;
     result := PT_RTTI[pt];
@@ -11298,7 +11225,7 @@ begin
   PT_INFO[ptQWord]               := TypeInfo(QWord);
   PT_INFO[ptRawByteString]       := TypeInfo(RawByteString);
   PT_INFO[ptRawJson]             := TypeInfo(RawJson);
-  PT_INFO[ptRawUtf8]             := TypeInfo(RawUtf8);
+  PT_INFO[ptRawUtf8]             := TypeInfo(RawUtf8); // = TypeInfo(Utf8String)
   PT_INFO[ptSingle]              := TypeInfo(Single);
   PT_INFO[ptString]              := TypeInfo(String);
   PT_INFO[ptSynUnicode]          := TypeInfo(SynUnicode);

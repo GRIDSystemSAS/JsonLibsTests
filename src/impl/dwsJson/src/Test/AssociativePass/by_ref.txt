@@ -1,8 +1,0 @@
-v alpha
-
-beta
-alpha
-
-c 
-
-beta

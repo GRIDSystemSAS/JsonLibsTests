@@ -1,9 +1,0 @@
-01011101
-False
-True
-True
-False
-False
-True
-False
-False

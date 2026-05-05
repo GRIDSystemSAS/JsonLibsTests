@@ -1,1 +1,0 @@
-Syntax Error: "ensure" or "end" expected but "." found [line: 16, column: 5]

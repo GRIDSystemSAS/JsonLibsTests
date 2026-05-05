@@ -1,1 +1,0 @@
-Syntax Error: Unexpected "=>" for a lambda statement [line: 3, column: 21]

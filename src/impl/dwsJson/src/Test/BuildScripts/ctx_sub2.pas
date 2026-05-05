@@ -1,4 +1,0 @@
-﻿procedure TestInclusion;
-begin
-end;
-

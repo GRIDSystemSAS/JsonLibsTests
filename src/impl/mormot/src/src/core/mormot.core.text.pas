@@ -100,6 +100,7 @@ function GetNextItemString(var P: PChar; Sep: Char = ','): string;
 // - will return -1 if no file extension match
 // - will return any matching extension, starting count at 0
 // - extension match is case-insensitive
+// - see also SameExt() from mormot.core.os.pas
 function GetFileNameExtIndex(const FileName, CsvExt: TFileName): integer;
 
 /// return next CSV string from P, nil if no more
@@ -542,7 +543,7 @@ type
   // - note: mORMot 1.18 TTextWriter.RegisterCustomJSONSerializerFromText()
   // are moved into Rtti.RegisterFromText() as other RTTI-related methods
   TTextWriter = class
-  protected
+  protected // check TLocalWriter if you add some new fields to this base class
     fDest: pointer; // may be a TStream, a PShortString or a RawUtf8
     fOnFlushToStream: TOnTextWriterFlush;
     fTempBuf: PUtf8Char;
@@ -765,8 +766,6 @@ type
     procedure Add3(Value: cardinal);
     /// append an integer Value as fixed-length 4 digits text with comma
     procedure Add4(Value: PtrUInt);
-    /// append a time period, specified in micro seconds, in 00.000.000 TSynLog format
-    procedure AddMicroSec(MicroSec: cardinal);
     /// append an array of RawUtf8 as CSV
     procedure AddCsvStrings(const Values: array of RawUtf8; const Sep: RawUtf8 = ',';
       HighValues: PtrInt = -1; Reverse: boolean = false); overload;
@@ -1360,9 +1359,7 @@ type
 var
   /// naive but efficient cache to avoid string memory allocation for
   // 0..999 small numbers by Int32ToUtf8/UInt32ToUtf8
-  // - use around 16KB of heap (since each item consumes 16 bytes), but increase
-  // overall performance and reduce memory allocation (and fragmentation),
-  // especially during multi-threaded execution
+  // - filled with statically allocated constant RawUtf8 values at startup
   // - noticeable when RawUtf8 strings are used as array indexes (e.g.
   // in mormot.db.nosql.bson)
   // - less noticeable without any allocation: StrInt32() is faster on a buffer
@@ -2026,12 +2023,12 @@ function StringToConsole(const S: string): RawByteString;
 /// write some text to the console using a given color
 // - redirect to mormot.core.os ConsoleWrite() with proper thread safety
 procedure ConsoleWrite(const Fmt: RawUtf8; const Args: array of const;
-  Color: TConsoleColor = ccLightGray; NoLineFeed: boolean = false); overload;
+  Color: TConsoleColor = ccDefault; NoLineFeed: boolean = false); overload;
 
 /// write some text to the console using a given color
 // - redirect to mormot.core.os ConsoleWrite() with proper thread safety
 procedure ConsoleWrite(const Args: array of const;
-  Color: TConsoleColor = ccLightGray; NoLineFeed: boolean = false); overload;
+  Color: TConsoleColor = ccDefault; NoLineFeed: boolean = false); overload;
 
 /// write some text to the console using the current color
 // - similar to writeln() but redirect to ConsoleWrite() with proper thread safety
@@ -2937,20 +2934,18 @@ end;
 
 function GetFileNameExtIndex(const FileName, CsvExt: TFileName): integer;
 var
-  Ext: TFileName;
+  ext: TFileName;
   P: PChar;
 begin
   result := -1;
   P := pointer(CsvExt);
-  Ext := ExtractFileExt(FileName);
+  ext := ExtractExt(FileName, {withoutdot=}true);
   if (P = nil) or
-     (Ext = '') or
-     (Ext[1] <> '.') then
+     (ext = '') then
     exit;
-  delete(Ext, 1, 1);
   repeat
     inc(result);
-    if SameText(GetNextItemString(P), Ext) then
+    if SameTextS(GetNextItemString(P), ext) then
       exit;
   until P = nil;
   result := -1;
@@ -5032,47 +5027,6 @@ begin
   B^ := ',';
 end;
 
-function Value3Digits(V: cardinal; P: PUtf8Char; W: PWordArray): cardinal;
-  {$ifdef HASINLINE}inline;{$endif}
-begin
-  result := V div 100;
-  PWord(P + 1)^ := W[V - result * 100];
-  V := result;
-  result := result div 10;
-  P^ := AnsiChar(V - result * 10 + 48);
-end;
-
-procedure TTextWriter.AddMicroSec(MicroSec: cardinal);
-var
-  W: PWordArray;
-  P: PUtf8Char;
-begin // append in 00.000.000 TSynLog format
-  if B >= BEnd then
-    FlushToStream;
-  P := B + 1;
-  W := @TwoDigitLookupW;
-  MicroSec := Value3Digits(MicroSec, P + 7, W);
-  if MicroSec = 0 then // most common case < 1ms
-  begin
-    PCardinal(P)^     := ord('0') + ord('0') shl 8 + ord('.') shl 16;
-    PCardinal(P + 3)^ := ord('0') + ord('0') shl 8 + ord('0') shl 16 + ord('.') shl 24;
-  end
-  else
-  begin
-    MicroSec := Value3Digits(MicroSec, P + 3, W);
-    if MicroSec = 0 then
-      MicroSec := $3030
-    else if MicroSec > 99 then
-      MicroSec := $3939
-    else
-      MicroSec := W[MicroSec];
-    PWord(P)^ := MicroSec;
-    P[2] := '.';
-    P[6] := '.';
-  end;
-  B := P + 9;
-end;
-
 procedure TTextWriter.AddCsvStrings(const Values: array of RawUtf8;
   const Sep: RawUtf8; HighValues: PtrInt; Reverse: boolean);
 begin
@@ -6547,7 +6501,7 @@ procedure Curr64ToStr(const Value: Int64; var result: RawUtf8);
 var
   tmp: array[0..31] of AnsiChar;
   P: PAnsiChar;
-  Decim, L: cardinal;
+  decim, L: cardinal;
 begin
   if Value = 0 then
     result := SmallUInt32Utf8[0]
@@ -6557,11 +6511,11 @@ begin
     L := @tmp[31] - P;
     if L > 4 then
     begin
-      Decim := PCardinal(P + L - SizeOf(cardinal))^; // 4 last digits = 4 decimals
-      if Decim = $30303030 then
+      decim := PCardinal(P + L - SizeOf(cardinal))^; // 4 last digits = 4 decimals
+      if decim = $30303030 then
         dec(L, 5)
       else // no decimal
-      if Decim and $ffff0000 = $30300000 then
+      if decim and $ffff0000 = $30300000 then
         dec(L, 2); // 2 decimals
     end;
     FastSetString(result, P, L);
@@ -6582,17 +6536,17 @@ function Curr64ToPChar(const Value: Int64; Dest: PUtf8Char): PtrInt;
 var
   tmp: array[0..31] of AnsiChar;
   P: PAnsiChar;
-  Decim: cardinal;
+  decim: cardinal;
 begin
   P := StrCurr64(@tmp[31], Value);
   result := @tmp[31] - P;
   if result > 4 then
   begin
-    // Decim = 4 last digits = 4 decimals
-    Decim := PCardinal(P + result - SizeOf(cardinal))^;
-    if Decim = $30303030 then // no decimal -> trunc trailing *.0000 chars
+    // decim = 4 last digits = 4 decimals
+    decim := PCardinal(P + result - SizeOf(cardinal))^;
+    if decim = $30303030 then // no decimal -> trunc trailing *.0000 chars
       dec(result, 5)
-    else if Decim and $ffff0000 = $30300000 then // 2 decimals -> trunc *.??00
+    else if decim and $ffff0000 = $30300000 then // 2 decimals -> trunc *.??00
       dec(result, 2);
   end;
   MoveFast(P^, Dest^, result);
@@ -6602,7 +6556,7 @@ function StrToCurr64(P: PUtf8Char; NoDecimal: PBoolean): Int64;
 var
   c: cardinal;
   minus: boolean;
-  Dec: cardinal;
+  decim: cardinal;
 begin
   result := 0;
   if P = nil then
@@ -6628,11 +6582,11 @@ begin
   if P^ = '.' then
   begin
     // '.5' -> 500
-    Dec := 2;
+    decim := 2;
     inc(P);
   end
   else
-    Dec := 0;
+    decim := 0;
   c := byte(P^) - 48;
   if c > 9 then
     exit;
@@ -6651,10 +6605,10 @@ begin
       {$endif HASSLOWMUL64}
       inc(result, c);
       inc(P);
-      if Dec <> 0 then
+      if decim <> 0 then
       begin
-        inc(Dec);
-        if Dec < 5 then
+        inc(decim);
+        if decim < 5 then
           continue
         else
           break;
@@ -6662,12 +6616,12 @@ begin
     end
     else
     begin
-      inc(Dec);
+      inc(decim);
       inc(P);
     end;
   until false;
   if NoDecimal <> nil then
-    if Dec = 0 then
+    if decim = 0 then
     begin
       NoDecimal^ := true;
       if minus then
@@ -6676,9 +6630,9 @@ begin
     end
     else
       NoDecimal^ := false;
-  if Dec <> 5 then
-    // Dec=5 most of the time
-    case Dec of
+  if decim <> 5 then
+    // decim=5 most of the time
+    case decim of
       0, 1:
         result := result * 10000;
       {$ifdef HASSLOWMUL64}
@@ -9561,6 +9515,7 @@ procedure _App2(var res: RawUtf8; const add1, add2: RawByteString; const cp: int
   {$ifdef HASINLINE} inline; {$endif}
 var
   l, a, a1, a2: PtrInt;
+  r: PAnsiChar;
 begin
   a1 := length(add1); // no automatic UTF-8 conversion involved
   a2 := length(add2);
@@ -9569,11 +9524,12 @@ begin
     exit;
   l := length(res);
   SetLength(res, l + a);
+  r := pointer(res);
   {$ifdef HASCODEPAGE}
-  PStrRec(PAnsiChar(PtrUInt(res)) - _STRRECSIZE)^.CodePage := cp;
+  PStrRec(r - _STRRECSIZE)^.CodePage := cp;
   {$endif HASCODEPAGE}
-  MoveFast(pointer(add1)^, PByteArray(res)[l], a1);
-  MoveFast(pointer(add2)^, PByteArray(res)[l + a1], a2);
+  MoveFast(pointer(add1)^, r[l], a1);
+  MoveFast(pointer(add2)^, r[l + a1], a2);
 end;
 
 procedure Append(var Text: RawUtf8; const Added: RawByteString);
@@ -9854,7 +9810,7 @@ begin
   if not HasConsole then
     exit;
   Make(Args, tmp);
-  ConsoleWrite(tmp, ccLightGray, NoLineFeed, {nocolor=}true);
+  ConsoleWrite(tmp, ccDefault, NoLineFeed, {nocolor=}true);
 end;
 
 procedure ConsoleShowFatalException(E: Exception; WaitForEnterKey: boolean);
@@ -11384,6 +11340,9 @@ begin
     end;
 end;
 
+var // pre-allocated SmallUInt32Utf8[] values as constant
+  _SmallUInt32Utf8: array[0..999] of TStrRecConst;
+
 procedure InitializeUnit;
 var
   i: PtrInt;
@@ -11424,7 +11383,7 @@ begin
   for i := 0 to high(SmallUInt32Utf8) do // 0..999 into '0'..'999'
   begin
     P := StrUInt32(@tmp[15], i);
-    FastSetString(SmallUInt32Utf8[i], P, @tmp[15] - P);
+    FastSetConst(SmallUInt32Utf8[i], _SmallUInt32Utf8[i], P, @tmp[15] - P);
   end;
   pc := @METHODNAME32;
   i := length(METHODNAME32);

@@ -1,5 +1,0 @@
-0:
-1:1
-hello:0
-world:0
-worldfoo,bar:2

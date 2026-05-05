@@ -1,2 +1,0 @@
-Hint: Property "Prop2" reintroduced a method, you should remove empty brackets () [line: 10, column: 17]
-Syntax Error: ")" expected [line: 10, column: 18]

@@ -1,1 +1,0 @@
-PrintLn(Hello(2.0)*World(3.0));

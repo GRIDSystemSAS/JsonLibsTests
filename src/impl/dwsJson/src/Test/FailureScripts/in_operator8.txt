@@ -1,3 +1,0 @@
-Syntax Error: Range start and range stop are of incompatible types: "TItems" and "void" [line: 10, column: 13]
-Syntax Error: Range start and range stop are of incompatible types: "TItems" and "void" [line: 12, column: 13]
-Syntax Error: "]" expected [line: 14, column: 8]

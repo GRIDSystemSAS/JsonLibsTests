@@ -1,9 +1,0 @@
-Initial:
-True
-True
-String:
-False
-True
-Unassigned:
-True
-True

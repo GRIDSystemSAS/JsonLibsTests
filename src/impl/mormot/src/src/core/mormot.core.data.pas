@@ -1610,7 +1610,7 @@ type
     Safe: TRWLightLock;
     /// the wrapper to a dynamic array
     DynArray: TDynArray;
-    /// will store the length of the TDynArray
+    /// will store the length of the TDynArray - should not be a PtrInt
     Count: integer;
   end;
 
@@ -10791,6 +10791,7 @@ end;
 procedure InitializeUnit;
 var
   k: TRttiKind;
+  p: PPUtf8CharArray;
 begin
   // initialize RTTI low-level comparison functions
   RTTI_ORD_COMPARE[roSByte]       := @_BC_SByte;
@@ -10871,12 +10872,22 @@ begin
     end;
   // setup internal function wrappers
   GetDataFromJson :=  _GetDataFromJson;
-  GlobalInfoRegister('os:',   _GlobalInfoOs);
-  GlobalInfoRegister('cpu:',  _GlobalInfoCpu);
-  GlobalInfoRegister('exe:',  _GlobalInfoExe);
-  GlobalInfoRegister('env:',  _GlobalInfoEnv);
-  GlobalInfoRegister('user:', _GlobalInfoUser);
-  GlobalInfoRegister('bios:', _GlobalInfoBios);
+  SetLength(_GlobalInfoPre, 6);
+  SetLength(_GlobalInfoAdd, 6);
+  p := pointer(_GlobalInfoPre);
+  p[0] := 'os:';
+  p[1] := 'cpu:';
+  p[2] := 'exe:';
+  p[3] := 'env:';
+  p[4] := 'user:';
+  p[5] := 'bios:';
+  p := pointer(_GlobalInfoAdd);
+  p[0] := @_GlobalInfoOs;
+  p[1] := @_GlobalInfoCpu;
+  p[2] := @_GlobalInfoExe;
+  p[3] := @_GlobalInfoEnv;
+  p[4] := @_GlobalInfoUser;
+  p[5] := @_GlobalInfoBios;
   {$ifdef OSWINDOWS}
   GlobalInfoRegister('join:', _GlobalInfoJoin);
   {$endif OSWINDOWS}

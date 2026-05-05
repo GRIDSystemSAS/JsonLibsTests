@@ -174,7 +174,7 @@ unit Neslib.Json;
   to use JsonString as well. If you don't care about the JSON_UTF8 define, then
   you can just use regular strings with this library. *)
 
-{$INCLUDE 'Neslib\Neslib.inc'}
+{$INCLUDE 'Neslib.inc'}
 
 interface
 

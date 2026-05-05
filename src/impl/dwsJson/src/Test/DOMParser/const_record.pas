@@ -1,1 +1,0 @@
-const c : record x : Integer end = (x:123);

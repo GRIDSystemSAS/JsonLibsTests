@@ -1,8 +1,0 @@
-PA
-PB
----
-PB
----
-PC
-PA
-PB

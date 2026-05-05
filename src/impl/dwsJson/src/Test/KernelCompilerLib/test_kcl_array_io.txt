@@ -1,5 +1,0 @@
-Testing Pascal Array of Float I/O...
-SetData(array of Float) PASSED
-GetData(var array of Float) PASSED
-SetData Float16 error caught correctly: KCL: Bulk Pascal array I/O currently supports Float32 only.
-GetData Float16 error caught correctly: KCL: Bulk Pascal array I/O currently supports Float32 only.

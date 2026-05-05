@@ -6,7 +6,6 @@
 ///
 ///
 ///*******************************************************
-
 unit gsJson.tests.jsonReport;
 
 interface
@@ -45,7 +44,7 @@ type
 
 function GetFactoryId(const ABackendName: string): string;
 const
-  CMap: array[0..19] of array[0..1] of string = (
+  CMap: array[0..18] of array[0..1] of string = (
     ('gsJson',              'gsjson'),
     ('beroJson',            'berojson'),
     ('xSuperObject',        'xsuperobject'),
@@ -64,7 +63,6 @@ const
     ('superObject',         'superobject'),
     ('jdo',                 'jdo'),
     ('json4Delphi',         'json4delphi'),
-    ('jsonTools',           'jsontools'),
     ('jsonDoc',             'jsondoc')
   );
 begin

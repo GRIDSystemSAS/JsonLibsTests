@@ -1,2 +1,0 @@
-Null
-Cannot store global of type TInterfaceSymbol [line: 11, column: 4]

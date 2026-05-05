@@ -1,1 +1,0 @@
-Syntax Error: Compiler switch "MODULE" unknown [line: 8, column: 3]

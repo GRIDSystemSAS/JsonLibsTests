@@ -1,6 +1,0 @@
-Testing: None -> GlobalAvgPool
-[PASS] JIT Map Sync Successful
-Testing: ReLU -> GlobalAvgPool
-[PASS] JIT Map Sync Successful
-Testing: HardSwish -> GlobalAvgPool
-[PASS] JIT Map Sync Successful

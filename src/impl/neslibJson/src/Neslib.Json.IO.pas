@@ -1,7 +1,7 @@
 unit Neslib.Json.IO;
 {< Classes for reading and writing JSON. }
 
-{$INCLUDE 'Neslib\Neslib.inc'}
+{$INCLUDE 'Neslib.inc'}
 
 interface
 

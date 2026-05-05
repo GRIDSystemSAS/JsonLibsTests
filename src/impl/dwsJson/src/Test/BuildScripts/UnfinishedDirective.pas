@@ -1,5 +1,0 @@
-unit UnfinishedDirective;
-
-interface
-
-{$DEF

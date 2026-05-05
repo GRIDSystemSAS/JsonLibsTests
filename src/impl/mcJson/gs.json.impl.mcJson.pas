@@ -6,7 +6,6 @@
 ///
 ///
 ///*******************************************************
-
 unit gs.json.impl.mcJson;
 
 interface
@@ -100,7 +99,7 @@ implementation
 
 // ---------------------------------------------------------------------------
 // Helper : TMcJsonItem -> TgsJsonElementType (for a single item/value node)
-// ValType (fValType) is private in McJSON — we detect the scalar sub-type via
+// ValType (fValType) is private in McJSON â€” we detect the scalar sub-type via
 // the public GetValueStr helper which returns 'string'/'number'/'boolean'/'null'.
 // ---------------------------------------------------------------------------
 function mcItemToElementType(item : TMcJsonItem) : TgsJsonElementType;
@@ -134,7 +133,7 @@ end;
 
 // ---------------------------------------------------------------------------
 // Helper : share a TMcJsonItem reference into an igsJson wrapper (not owned)
-// The source item is owned by the parent FJson tree — do NOT free it here.
+// The source item is owned by the parent FJson tree â€” do NOT free it here.
 // ---------------------------------------------------------------------------
 procedure extractValue(source : TMcJsonItem; var value : igsJson);
 var
@@ -243,7 +242,7 @@ begin
 end;
 
 // ---------------------------------------------------------------------------
-// put — object mode
+// put â€” object mode
 // ---------------------------------------------------------------------------
 
 function TgsJsonImplMc.put(name: string; val: double): igsJson;
@@ -299,7 +298,7 @@ begin
 end;
 
 // ---------------------------------------------------------------------------
-// put — array mode
+// put â€” array mode
 // ---------------------------------------------------------------------------
 
 function TgsJsonImplMc.put(vals: array of const): igsJson;
@@ -335,7 +334,7 @@ begin
 end;
 
 // ---------------------------------------------------------------------------
-// get — scalars by name
+// get â€” scalars by name
 // ---------------------------------------------------------------------------
 
 function TgsJsonImplMc.get(name: string; var value: string): igsJson;
@@ -371,7 +370,7 @@ begin
 end;
 
 // ---------------------------------------------------------------------------
-// get — scalars by index
+// get â€” scalars by index
 // ---------------------------------------------------------------------------
 
 function TgsJsonImplMc.get(index: integer; var value: string): igsJson;
@@ -403,7 +402,7 @@ begin
 end;
 
 // ---------------------------------------------------------------------------
-// get — object/array by name or index (shared reference, not owned)
+// get â€” object/array by name or index (shared reference, not owned)
 // ---------------------------------------------------------------------------
 
 function TgsJsonImplMc.get(name: string; var value: igsJson): igsJson;
@@ -504,7 +503,7 @@ begin
 end;
 
 // ---------------------------------------------------------------------------
-// add — array mode
+// add â€” array mode
 // ---------------------------------------------------------------------------
 
 function TgsJsonImplMc.add(val: igsJson): igsJson;
@@ -559,7 +558,7 @@ begin
 end;
 
 // ---------------------------------------------------------------------------
-// ToObj / ToArray — force item type
+// ToObj / ToArray â€” force item type
 // ---------------------------------------------------------------------------
 
 function TgsJsonImplMc.ToObj: igsJson;

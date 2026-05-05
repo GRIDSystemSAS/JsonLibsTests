@@ -1,5 +1,0 @@
-TObj2.Create(1)
-TObj1.Create(1)
-TObj3.Create
-TObj1.Create
-TObj3

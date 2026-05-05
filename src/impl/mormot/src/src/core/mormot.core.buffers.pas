@@ -1398,6 +1398,10 @@ function Base58ToBin(B58: PAnsiChar; B58Len: integer): RawByteString; overload;
 function Base58ToBin(const base58: RawUtf8): RawByteString; overload;
   {$ifdef HASINLINE}inline;{$endif}
 
+const
+  b32encUpper: array[0..31] of AnsiChar = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  b32encLower: array[0..31] of AnsiChar = 'abcdefghijklmnopqrstuvwxyz234567';
+
 /// compute the length resulting of Base32 encoding of a binary buffer
 // - RFC4648 Base32 is defined as upper alphanumeric without misleading 0O 1I 8B
 function BinToBase32Length(BinLen: cardinal): cardinal;
@@ -2677,8 +2681,9 @@ type
   {$endif USERECORDWITHMETHODS}
   private
     fBuffer: RawUtf8; // actual storage, with length(fBuffer) as Capacity
-    fLen: PtrInt;
   public
+    /// how many bytes are currently used in the Buffer
+    Len: PtrInt;
     /// set Len to 0, but doesn't clear/free the fBuffer working mem itself
     procedure Reset;
       {$ifdef HASINLINE}inline;{$endif}
@@ -2735,9 +2740,6 @@ type
     // - with some optional overhead bytes to avoid ReallocMem at concatenation
     // - won't force Len to 0: caller should call Reset if done with it
     procedure AsText(out Text: RawUtf8; Overhead: PtrInt = 0);
-    /// how many bytes are currently used in the Buffer
-    property Len: PtrInt
-      read fLen write fLen;
   end;
 
   /// pointer reference to a TRawByteStringBuffer
@@ -7249,8 +7251,6 @@ begin
 end;
 
 const
-  b32encUpper: array[0..31] of AnsiChar = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  b32encLower: array[0..31] of AnsiChar = 'abcdefghijklmnopqrstuvwxyz234567';
   b32enc: array[boolean] of PAnsiChar = (@b32encUpper, @b32encLower);
   b32pad: array[0..4] of byte = (8, 6, 4, 3, 1);
 var
@@ -8296,7 +8296,7 @@ var
   tmp: TSynTempBuffer;
 begin
   if L = 0 then
-    result := ''
+    FastAssignNew(result)
   else
     tmp.Done(DoUrlDecode(tmp.Init(L), pointer(U), space), result);
 end;
@@ -10891,12 +10891,12 @@ end;
 
 procedure TRawByteStringBuffer.Reset;
 begin
-  fLen := 0;
+  Len := 0;
 end;
 
 function TRawByteStringBuffer.Clear: PtrInt;
 begin
-  fLen := 0;
+  Len := 0;
   result := length(fBuffer);
   if result <> 0 then
     FastAssignNew(fBuffer);
@@ -10918,17 +10918,17 @@ var
 begin
   if PLen <= 0 then
     exit;
-  needed := fLen + PLen + 32; // +32 for Append(AnsiChar), AppendCRLF
+  needed := Len + PLen + 32; // +32 for Append(AnsiChar), AppendCRLF
   if needed > length(fBuffer) then
-    if fLen = 0 then // buffer from scratch (fBuffer may be '' or not)
+    if Len = 0 then // buffer from scratch (fBuffer may be '' or not)
       FastSetString(fBuffer, needed + 96) // no realloc + small initial overhead
     else
     begin
       inc(needed, needed shr 3 + 2048); // generous overhead on resize
       SetLength(fBuffer, needed);       // realloc = move existing data
     end;
-  MoveFast(P^, PByteArray(fBuffer)[fLen], PLen);
-  inc(fLen, PLen);
+  MoveFast(P^, PByteArray(fBuffer)[Len], PLen);
+  inc(Len, PLen);
 end;
 
 procedure TRawByteStringBuffer.Append(const Text: RawUtf8);
@@ -10960,16 +10960,16 @@ procedure TRawByteStringBuffer.AppendCRLF;
 var
   p: PByteArray; // faster than PWord() on Intel
 begin
-  p := @PByteArray(fBuffer)[fLen];
+  p := @PByteArray(fBuffer)[Len];
   p[0] := 13;
   p[1] := 10;
-  inc(fLen, 2);
+  inc(Len, 2);
 end;
 
 procedure TRawByteStringBuffer.Append(Ch: AnsiChar);
 begin
-  PByteArray(fBuffer)[fLen] := ord(Ch);
-  inc(fLen);
+  PByteArray(fBuffer)[Len] := ord(Ch);
+  inc(Len);
 end;
 
 procedure TRawByteStringBuffer.AppendShort(const Text: ShortString);
@@ -10987,10 +10987,10 @@ end;
 
 function TRawByteStringBuffer.TryAppend(P: pointer; PLen: PtrInt): boolean;
 begin
-  if fLen + PLen <= length(fBuffer) then
+  if Len + PLen <= length(fBuffer) then
   begin
-    MoveFast(P^, PByteArray(fBuffer)[fLen], PLen);
-    inc(fLen, PLen);
+    MoveFast(P^, PByteArray(fBuffer)[Len], PLen);
+    inc(Len, PLen);
     result := true;
   end
   else
@@ -10999,14 +10999,14 @@ end;
 
 procedure TRawByteStringBuffer.Reserve(MaxSize: PtrInt);
 begin
-  fLen := 0;
+  Len := 0;
   if length(fBuffer) < MaxSize then
     FastSetString(fBuffer, MaxSize); // make new buffer from scratch
 end;
 
 procedure TRawByteStringBuffer.Reserve(const WorkingBuffer: RawByteString);
 begin
-  fLen := 0;
+  Len := 0;
   if pointer(fBuffer) <> pointer(WorkingBuffer) then
     fBuffer := WorkingBuffer;
 end;
@@ -11014,32 +11014,32 @@ end;
 procedure TRawByteStringBuffer.Remove(FirstBytes: PtrInt);
 begin
   if FirstBytes > 0 then
-    if FirstBytes >= fLen then
-      fLen := 0
+    if FirstBytes >= Len then
+      Len := 0
     else
     begin
-      dec(fLen, FirstBytes);
-      MoveFast(PByteArray(fBuffer)[FirstBytes], pointer(fBuffer)^, fLen);
+      dec(Len, FirstBytes);
+      MoveFast(PByteArray(fBuffer)[FirstBytes], pointer(fBuffer)^, Len);
     end;
 end;
 
 function TRawByteStringBuffer.Extract(Dest: pointer; Count: PtrInt): PtrInt;
 begin
-  result := fLen;
+  result := Len;
   if Count < result then
     result := Count;
   if result <= 0 then
     exit;
   MoveFast(pointer(fBuffer)^, Dest^, result);
-  dec(fLen, result);
-  if fLen <> 0 then // keep trailing bytes for next call
-    MoveFast(PByteArray(fBuffer)[result], pointer(fBuffer)^, fLen);
+  dec(Len, result);
+  if Len <> 0 then // keep trailing bytes for next call
+    MoveFast(PByteArray(fBuffer)[result], pointer(fBuffer)^, Len);
 end;
 
 function TRawByteStringBuffer.ExtractAt(
   var Dest: PAnsiChar; var Count: PtrInt; var Pos: PtrInt): PtrInt;
 begin
-  result := fLen - Pos;
+  result := Len - Pos;
   if (result = 0) or
      (Count = 0) then
     exit;
@@ -11047,7 +11047,7 @@ begin
     result := Count;
   MoveFast(PByteArray(fBuffer)[Pos], Dest^, result);
   inc(Pos, result);
-  if Pos = fLen then
+  if Pos = Len then
   begin
     Reset; // all pending content has been read
     Pos := 0;
@@ -11058,15 +11058,15 @@ end;
 
 procedure TRawByteStringBuffer.AsText(out Text: RawUtf8; Overhead: PtrInt);
 begin
-  if (fLen = 0) or
+  if (Len = 0) or
      (fBuffer = '') or
      (OverHead < 0) then
     exit;
-  pointer(Text) := FastNewString(fLen + Overhead, CP_UTF8);
-  MoveFast(pointer(fBuffer)^, pointer(Text)^, fLen);
+  pointer(Text) := FastNewString(Len + Overhead, CP_UTF8);
+  MoveFast(pointer(fBuffer)^, pointer(Text)^, Len);
   if OverHead <> 0 then
-    FakeLength(Text, fLen); // put Text[fLen] := #0 and set PStrRec^.length
-end; // keep fLen since may be not final - see e.g. TPostConnection.OnRead
+    FakeLength(Text, Len); // put Text[Len] := #0 and set PStrRec^.length
+end; // keep Len since may be not final - see e.g. TPostConnection.OnRead
 
 
 procedure InitializeUnit;

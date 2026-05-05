@@ -1,3 +1,0 @@
-Preflight first dispatch: PASS
-Preflight cached dispatch: PASS
-Dispatch consistency: PASS

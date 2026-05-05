@@ -1,3 +1,0 @@
-Errors >>>>
-Warning: Unit name does not match file name [line: 1, column: 6]
-Syntax Error: Cannot assign a value to the left-side argument [line: 24, column: 5]

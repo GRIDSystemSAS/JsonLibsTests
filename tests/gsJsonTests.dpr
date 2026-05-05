@@ -6,7 +6,6 @@
 ///
 ///
 ///*******************************************************
-
 program gsJsonTests;
 
 
@@ -73,10 +72,7 @@ uses
   PasDblStrUtils in '..\src\impl\bero\src\pasdblstrutils\src\PasDblStrUtils.pas',
   PasJSON in '..\src\impl\bero\src\src\PasJSON.pas',
   gs.json.impl.beroJson in '..\src\impl\bero\gs.json.impl.beroJson.pas',
-  uLkJSON in '..\src\impl\lkJson\uLkJSON.pas',
   gs.json.impl.lkJson in '..\src\impl\lkJson\gs.json.impl.lkJson.pas',
-  JsonTools in '..\src\impl\jsonTools\src\JsonTools.pas',
-  gs.json.impl.jsonTools in '..\src\impl\jsonTools\gs.json.impl.jsonTools.pas',
   jsonDoc in '..\src\impl\jsonDoc\src\jsonDoc.pas',
   gs.json.impl.jsonDoc in '..\src\impl\jsonDoc\gs.json.impl.jsonDoc.pas',
   gs.json.impl.mcJson in '..\src\impl\mcJson\gs.json.impl.mcJson.pas',
@@ -102,7 +98,7 @@ uses
   dwsXPlatform in '..\src\impl\dwsJson\src\Source\dwsXPlatform.pas',
   dwsXXHash in '..\src\impl\dwsJson\src\Source\dwsXXHash.pas',
   dwsUnicode in '..\src\impl\dwsJson\src\Source\dwsUnicode.pas',
-  dwsUTF8 in '..\src\impl\dwsJson\src\Source\dwsUTF8.pas', 
+  dwsUTF8 in '..\src\impl\dwsJson\src\Source\dwsUTF8.pas',
   gs.json.impl.dwsJson in '..\src\impl\dwsJson\gs.json.impl.dwsJson.pas',
   DataObjects2 in '..\src\impl\dynamicDataObjects\src\src\DataObjects2.pas',
   DataObjects2JSON in '..\src\impl\dynamicDataObjects\src\src\DataObjects2JSON.pas',
@@ -150,7 +146,8 @@ uses
   VSoft.YAML.TagInfo in '..\src\impl\vsoftYaml\src\Source\VSoft.YAML.TagInfo.pas',
   VSoft.YAML.StreamWriter in '..\src\impl\vsoftYaml\src\Source\VSoft.YAML.StreamWriter.pas',
   VSoft.YAML.Path in '..\src\impl\vsoftYaml\src\Source\VSoft.YAML.Path.pas',
-  gs.json.impl.vsoftYaml in '..\src\impl\vsoftYaml\gs.json.impl.vsoftYaml.pas';
+  gs.json.impl.vsoftYaml in '..\src\impl\vsoftYaml\gs.json.impl.vsoftYaml.pas',
+  uLkJSON in '..\src\impl\lkJson\src\uLkJSON.pas';
 
 {$R *.res}
 

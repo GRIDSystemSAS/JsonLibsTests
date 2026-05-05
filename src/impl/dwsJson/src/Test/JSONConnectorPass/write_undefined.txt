@@ -1,3 +1,0 @@
-Cannot set member "bug" of Undefined
-Cannot set items of Undefined
-Cannot set items of Undefined
