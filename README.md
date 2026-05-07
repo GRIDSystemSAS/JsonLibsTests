@@ -66,23 +66,36 @@ Lib                                      Upstream                               
 ---------------------------------------  -----------------------------------------------  ----------
 gsJson (gsJson (native))                 https://github.com/GRIDSystemSAS/JsonLibsTests
 embDelphiJson (Embarcadero System.JSON)
-bero (PasJSON)                           https://github.com/BeRo1985/pasjson              2026-05-05
+bero (PasJSON)                           https://github.com/BeRo1985/pasjson              2026-05-07
 chimera (Chimera JSON)
-dwsJson (DWScript JSON)                  https://github.com/EricGrange/DWScript           2026-05-05
+dwsJson (DWScript JSON)                  https://github.com/EricGrange/DWScript           2026-05-07
 dynamicDataObjects (DataObjects2)
-grijjyBson (Grijjy.Foundation BSON)      https://github.com/grijjy/GrijjyFoundation       2026-05-05
-jdo (JsonDataObjects)                    https://github.com/ahausladen/JsonDataObjects    2026-05-05
+grijjyBson (Grijjy.Foundation BSON)      https://github.com/grijjy/GrijjyFoundation       2026-05-07
+jdo (JsonDataObjects)                    https://github.com/ahausladen/JsonDataObjects    2026-05-07
 json4Delphi (JSON4Delphi (Jsons))
-jsonDoc                                  https://github.com/stijnsanders/jsonDoc          2026-05-05
+jsonDoc                                  https://github.com/stijnsanders/jsonDoc          2026-05-07
 lkJson
 mcJson
-mormot (mORMot 2)                        https://github.com/synopse/mORMot2               2026-05-05
+mormot (mORMot 2)                        https://github.com/synopse/mORMot2               2026-05-07
 myJson
-neslibJson (Neslib.Json)                 https://github.com/neslib/Neslib.Json            2026-05-05
+neslibJson (Neslib.Json)                 https://github.com/neslib/Neslib.Json            2026-05-07
 superObject                              https://github.com/hgourvest/superobject
 uJson
-vsoftYaml (VSoft.YAML)                   https://github.com/VSoftTechnologies/VSoft.YAML  2026-05-05
-xSuperObject                             https://github.com/onryldz/x-superobject         2026-05-05
+vsoftYaml (VSoft.YAML)                   https://github.com/VSoftTechnologies/VSoft.YAML  2026-05-07
+xSuperObject                             https://github.com/onryldz/x-superobject         2026-05-07
+
+Lib                Status OldVersion                    NewVersion
+---                ------ ----------                    ----------
+bero               OK     snapshot 2026-05-05 (3339a83) snapshot 2026-05-07 (3339a83)
+beroPasDblStrUtils OK     snapshot 2026-05-05 (e191fc0) snapshot 2026-05-07 (e191fc0)
+dwsJson            OK     snapshot 2026-05-05 (dd64594) snapshot 2026-05-07 (dd64594)
+grijjyBson         OK     snapshot 2026-05-05 (be40be3) snapshot 2026-05-07 (be40be3)
+jdo                OK     snapshot 2026-05-05 (3f936c0) snapshot 2026-05-07 (3f936c0)
+jsonDoc            OK     snapshot 2026-05-05 (a3bdb7d) snapshot 2026-05-07 (a3bdb7d)
+mormot             OK     snapshot 2026-05-05 (95358f4) snapshot 2026-05-07 (71d9b78)
+neslibJson         OK     snapshot 2026-05-05 (1c36874) snapshot 2026-05-07 (1c36874)
+vsoftYaml          OK     snapshot 2026-05-05 (eb81d15) snapshot 2026-05-07 (d85af55)
+xSuperObject       OK     snapshot 2026-05-05 (2d3ec01) snapshot 2026-05-07 (2d3ec01)
 ```
 
 # How to use
@@ -115,26 +128,26 @@ Here is the output of the program after a test launched on 05/05/2026.
 +----+-----------------------+-----------------------+------+------+-------+-------+--------+--------+
 | #  |  Backend              | Factory ID            | Pass | Fail | Error | Total | Score  |  Time  |
 +----+-----------------------+-----------------------+------+------+-------+-------+--------+--------+
-|  1 | dwsJson               | dwsjson               |   62 |    0 |     0 |    62 | 100,0% | 0,016s |
+|  1 | dwsJson               | dwsjson               |   62 |    0 |     0 |    62 | 100,0% | 0,015s |
 |  2 | gsJson                | gsjson                |   62 |    0 |     0 |    62 | 100,0% | 0,015s |
 |  3 | jdo                   | jdo                   |   62 |    0 |     0 |    62 | 100,0% | 0,014s |
-|  4 | xSuperObject          | xsuperobject          |   62 |    0 |     0 |    62 | 100,0% | 0,019s |
-|  5 | beroJson              | berojson              |   61 |    1 |     0 |    62 |  98,4% | 0,017s |
-|  6 | embarcaderoDelphiJson | embarcaderoDelphiJson |   61 |    1 |     0 |    62 |  98,4% | 0,014s |
-|  7 | grijjyBson            | grijjybson            |   61 |    1 |     0 |    62 |  98,4% | 0,014s |
-|  8 | vsoftYaml             | vsoftyaml             |   61 |    1 |     0 |    62 |  98,4% | 0,016s |
-|  9 | neslibJson            | neslibjson            |   60 |    2 |     0 |    62 |  96,8% | 0,015s |
-| 10 | dynamicDataObjects    | dynamicdataobjects    |   59 |    1 |     2 |    62 |  95,2% | 0,016s |
+|  4 | vsoftYaml             | vsoftyaml             |   62 |    0 |     0 |    62 | 100,0% | 0,015s |
+|  5 | xSuperObject          | xsuperobject          |   62 |    0 |     0 |    62 | 100,0% | 0,016s |
+|  6 | beroJson              | berojson              |   61 |    1 |     0 |    62 |  98,4% | 0,019s |
+|  7 | embarcaderoDelphiJson | embarcaderoDelphiJson |   61 |    1 |     0 |    62 |  98,4% | 0,015s |
+|  8 | grijjyBson            | grijjybson            |   61 |    1 |     0 |    62 |  98,4% | 0,014s |
+|  9 | neslibJson            | neslibjson            |   60 |    2 |     0 |    62 |  96,8% | 0,013s |
+| 10 | dynamicDataObjects    | dynamicdataobjects    |   59 |    1 |     2 |    62 |  95,2% | 0,015s |
 | 11 | lkJson                | lkjson                |   59 |    3 |     0 |    62 |  95,2% | 0,015s |
 | 12 | superObject           | superobject           |   59 |    3 |     0 |    62 |  95,2% | 0,013s |
 | 13 | mormot2               | mormot2               |   56 |    6 |     0 |    62 |  90,3% | 0,015s |
 | 14 | mcJson                | mcjson                |   55 |    2 |     5 |    62 |  88,7% | 0,017s |
-| 15 | chimera               | chimera               |   54 |    5 |     3 |    62 |  87,1% | 0,017s |
+| 15 | chimera               | chimera               |   53 |    6 |     3 |    62 |  85,5% | 0,018s |
 | 16 | json4Delphi           | json4delphi           |   52 |    2 |     8 |    62 |  83,9% | 0,016s |
 | 17 | myJson                | myjson                |   49 |    6 |     7 |    62 |  79,0% | 0,019s |
 | 18 | jsonDoc               | jsondoc               |   45 |    2 |    15 |    62 |  72,6% | 0,019s |
 +----+-----------------------+-----------------------+------+------+-------+-------+--------+--------+
-|    | TOTAL                 |                       | 1040 |   36 |    40 |  1116 |  93,2% | 0,284s |
+|    | TOTAL                 |                       | 1040 |   36 |    40 |  1116 |  93,2% | 0,283s |
 +----+-----------------------+-----------------------+------+------+-------+-------+--------+--------+
 ```
 
@@ -198,23 +211,36 @@ Lib                                      Upstream                               
 ---------------------------------------  -----------------------------------------------  ----------
 gsJson (gsJson (native))                 https://github.com/GRIDSystemSAS/JsonLibsTests
 embDelphiJson (Embarcadero System.JSON)
-bero (PasJSON)                           https://github.com/BeRo1985/pasjson              2026-05-05
+bero (PasJSON)                           https://github.com/BeRo1985/pasjson              2026-05-07
 chimera (Chimera JSON)
-dwsJson (DWScript JSON)                  https://github.com/EricGrange/DWScript           2026-05-05
+dwsJson (DWScript JSON)                  https://github.com/EricGrange/DWScript           2026-05-07
 dynamicDataObjects (DataObjects2)
-grijjyBson (Grijjy.Foundation BSON)      https://github.com/grijjy/GrijjyFoundation       2026-05-05
-jdo (JsonDataObjects)                    https://github.com/ahausladen/JsonDataObjects    2026-05-05
+grijjyBson (Grijjy.Foundation BSON)      https://github.com/grijjy/GrijjyFoundation       2026-05-07
+jdo (JsonDataObjects)                    https://github.com/ahausladen/JsonDataObjects    2026-05-07
 json4Delphi (JSON4Delphi (Jsons))
-jsonDoc                                  https://github.com/stijnsanders/jsonDoc          2026-05-05
+jsonDoc                                  https://github.com/stijnsanders/jsonDoc          2026-05-07
 lkJson
 mcJson
-mormot (mORMot 2)                        https://github.com/synopse/mORMot2               2026-05-05
+mormot (mORMot 2)                        https://github.com/synopse/mORMot2               2026-05-07
 myJson
-neslibJson (Neslib.Json)                 https://github.com/neslib/Neslib.Json            2026-05-05
+neslibJson (Neslib.Json)                 https://github.com/neslib/Neslib.Json            2026-05-07
 superObject                              https://github.com/hgourvest/superobject
 uJson
-vsoftYaml (VSoft.YAML)                   https://github.com/VSoftTechnologies/VSoft.YAML  2026-05-05
-xSuperObject                             https://github.com/onryldz/x-superobject         2026-05-05
+vsoftYaml (VSoft.YAML)                   https://github.com/VSoftTechnologies/VSoft.YAML  2026-05-07
+xSuperObject                             https://github.com/onryldz/x-superobject         2026-05-07
+
+Lib                Status OldVersion                    NewVersion
+---                ------ ----------                    ----------
+bero               OK     snapshot 2026-05-05 (3339a83) snapshot 2026-05-07 (3339a83)
+beroPasDblStrUtils OK     snapshot 2026-05-05 (e191fc0) snapshot 2026-05-07 (e191fc0)
+dwsJson            OK     snapshot 2026-05-05 (dd64594) snapshot 2026-05-07 (dd64594)
+grijjyBson         OK     snapshot 2026-05-05 (be40be3) snapshot 2026-05-07 (be40be3)
+jdo                OK     snapshot 2026-05-05 (3f936c0) snapshot 2026-05-07 (3f936c0)
+jsonDoc            OK     snapshot 2026-05-05 (a3bdb7d) snapshot 2026-05-07 (a3bdb7d)
+mormot             OK     snapshot 2026-05-05 (95358f4) snapshot 2026-05-07 (71d9b78)
+neslibJson         OK     snapshot 2026-05-05 (1c36874) snapshot 2026-05-07 (1c36874)
+vsoftYaml          OK     snapshot 2026-05-05 (eb81d15) snapshot 2026-05-07 (d85af55)
+xSuperObject       OK     snapshot 2026-05-05 (2d3ec01) snapshot 2026-05-07 (2d3ec01)
 ```
 
 ## Comment l'utiliser
@@ -251,26 +277,26 @@ Voici la sortie du programme après une exécution lancée le 05/05/2026 :
 +----+-----------------------+-----------------------+------+------+-------+-------+--------+--------+
 | #  |  Backend              | Factory ID            | Pass | Fail | Error | Total | Score  |  Time  |
 +----+-----------------------+-----------------------+------+------+-------+-------+--------+--------+
-|  1 | dwsJson               | dwsjson               |   62 |    0 |     0 |    62 | 100,0% | 0,016s |
+|  1 | dwsJson               | dwsjson               |   62 |    0 |     0 |    62 | 100,0% | 0,015s |
 |  2 | gsJson                | gsjson                |   62 |    0 |     0 |    62 | 100,0% | 0,015s |
 |  3 | jdo                   | jdo                   |   62 |    0 |     0 |    62 | 100,0% | 0,014s |
-|  4 | xSuperObject          | xsuperobject          |   62 |    0 |     0 |    62 | 100,0% | 0,019s |
-|  5 | beroJson              | berojson              |   61 |    1 |     0 |    62 |  98,4% | 0,017s |
-|  6 | embarcaderoDelphiJson | embarcaderoDelphiJson |   61 |    1 |     0 |    62 |  98,4% | 0,014s |
-|  7 | grijjyBson            | grijjybson            |   61 |    1 |     0 |    62 |  98,4% | 0,014s |
-|  8 | vsoftYaml             | vsoftyaml             |   61 |    1 |     0 |    62 |  98,4% | 0,016s |
-|  9 | neslibJson            | neslibjson            |   60 |    2 |     0 |    62 |  96,8% | 0,015s |
-| 10 | dynamicDataObjects    | dynamicdataobjects    |   59 |    1 |     2 |    62 |  95,2% | 0,016s |
+|  4 | vsoftYaml             | vsoftyaml             |   62 |    0 |     0 |    62 | 100,0% | 0,015s |
+|  5 | xSuperObject          | xsuperobject          |   62 |    0 |     0 |    62 | 100,0% | 0,016s |
+|  6 | beroJson              | berojson              |   61 |    1 |     0 |    62 |  98,4% | 0,019s |
+|  7 | embarcaderoDelphiJson | embarcaderoDelphiJson |   61 |    1 |     0 |    62 |  98,4% | 0,015s |
+|  8 | grijjyBson            | grijjybson            |   61 |    1 |     0 |    62 |  98,4% | 0,014s |
+|  9 | neslibJson            | neslibjson            |   60 |    2 |     0 |    62 |  96,8% | 0,013s |
+| 10 | dynamicDataObjects    | dynamicdataobjects    |   59 |    1 |     2 |    62 |  95,2% | 0,015s |
 | 11 | lkJson                | lkjson                |   59 |    3 |     0 |    62 |  95,2% | 0,015s |
 | 12 | superObject           | superobject           |   59 |    3 |     0 |    62 |  95,2% | 0,013s |
 | 13 | mormot2               | mormot2               |   56 |    6 |     0 |    62 |  90,3% | 0,015s |
 | 14 | mcJson                | mcjson                |   55 |    2 |     5 |    62 |  88,7% | 0,017s |
-| 15 | chimera               | chimera               |   54 |    5 |     3 |    62 |  87,1% | 0,017s |
+| 15 | chimera               | chimera               |   53 |    6 |     3 |    62 |  85,5% | 0,018s |
 | 16 | json4Delphi           | json4delphi           |   52 |    2 |     8 |    62 |  83,9% | 0,016s |
 | 17 | myJson                | myjson                |   49 |    6 |     7 |    62 |  79,0% | 0,019s |
 | 18 | jsonDoc               | jsondoc               |   45 |    2 |    15 |    62 |  72,6% | 0,019s |
 +----+-----------------------+-----------------------+------+------+-------+-------+--------+--------+
-|    | TOTAL                 |                       | 1040 |   36 |    40 |  1116 |  93,2% | 0,284s |
+|    | TOTAL                 |                       | 1040 |   36 |    40 |  1116 |  93,2% | 0,283s |
 +----+-----------------------+-----------------------+------+------+-------+-------+--------+--------+
 ~~~
 
