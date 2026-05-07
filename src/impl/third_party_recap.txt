@@ -2,20 +2,33 @@ Lib                                      Upstream                               
 ---------------------------------------  -----------------------------------------------  ----------
 gsJson (gsJson (native))                 https://github.com/GRIDSystemSAS/JsonLibsTests
 embDelphiJson (Embarcadero System.JSON)
-bero (PasJSON)                           https://github.com/BeRo1985/pasjson              2026-05-05
+bero (PasJSON)                           https://github.com/BeRo1985/pasjson              2026-05-07
 chimera (Chimera JSON)
-dwsJson (DWScript JSON)                  https://github.com/EricGrange/DWScript           2026-05-05
+dwsJson (DWScript JSON)                  https://github.com/EricGrange/DWScript           2026-05-07
 dynamicDataObjects (DataObjects2)
-grijjyBson (Grijjy.Foundation BSON)      https://github.com/grijjy/GrijjyFoundation       2026-05-05
-jdo (JsonDataObjects)                    https://github.com/ahausladen/JsonDataObjects    2026-05-05
+grijjyBson (Grijjy.Foundation BSON)      https://github.com/grijjy/GrijjyFoundation       2026-05-07
+jdo (JsonDataObjects)                    https://github.com/ahausladen/JsonDataObjects    2026-05-07
 json4Delphi (JSON4Delphi (Jsons))
-jsonDoc                                  https://github.com/stijnsanders/jsonDoc          2026-05-05
+jsonDoc                                  https://github.com/stijnsanders/jsonDoc          2026-05-07
 lkJson
 mcJson
-mormot (mORMot 2)                        https://github.com/synopse/mORMot2               2026-05-05
+mormot (mORMot 2)                        https://github.com/synopse/mORMot2               2026-05-07
 myJson
-neslibJson (Neslib.Json)                 https://github.com/neslib/Neslib.Json            2026-05-05
+neslibJson (Neslib.Json)                 https://github.com/neslib/Neslib.Json            2026-05-07
 superObject                              https://github.com/hgourvest/superobject
 uJson
-vsoftYaml (VSoft.YAML)                   https://github.com/VSoftTechnologies/VSoft.YAML  2026-05-05
-xSuperObject                             https://github.com/onryldz/x-superobject         2026-05-05
+vsoftYaml (VSoft.YAML)                   https://github.com/VSoftTechnologies/VSoft.YAML  2026-05-07
+xSuperObject                             https://github.com/onryldz/x-superobject         2026-05-07
+
+Lib                Status OldVersion                    NewVersion
+---                ------ ----------                    ----------
+bero               OK     snapshot 2026-05-05 (3339a83) snapshot 2026-05-07 (3339a83)
+beroPasDblStrUtils OK     snapshot 2026-05-05 (e191fc0) snapshot 2026-05-07 (e191fc0)
+dwsJson            OK     snapshot 2026-05-05 (dd64594) snapshot 2026-05-07 (dd64594)
+grijjyBson         OK     snapshot 2026-05-05 (be40be3) snapshot 2026-05-07 (be40be3)
+jdo                OK     snapshot 2026-05-05 (3f936c0) snapshot 2026-05-07 (3f936c0)
+jsonDoc            OK     snapshot 2026-05-05 (a3bdb7d) snapshot 2026-05-07 (a3bdb7d)
+mormot             OK     snapshot 2026-05-05 (95358f4) snapshot 2026-05-07 (71d9b78)
+neslibJson         OK     snapshot 2026-05-05 (1c36874) snapshot 2026-05-07 (1c36874)
+vsoftYaml          OK     snapshot 2026-05-05 (eb81d15) snapshot 2026-05-07 (d85af55)
+xSuperObject       OK     snapshot 2026-05-05 (2d3ec01) snapshot 2026-05-07 (2d3ec01)

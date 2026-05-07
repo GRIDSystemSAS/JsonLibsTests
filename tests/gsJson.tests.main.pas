@@ -92,7 +92,7 @@ type
     procedure test_arrayAndVariousGet;
     [Test]
     [TestCase('Test Put A','Hello World','')]
-    [TestCase('Test Put B','ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½&','')]
+    [TestCase('Test Put B','���������&','')]
     procedure Test_PutAndGetStr(const a : string);
 
     [Test]
@@ -285,7 +285,6 @@ type
   public
     [Setup]
     procedure Setup; override;
-    procedure Test_RFC8259_NumberInvalid(const aJson: string); override;
   end;
 
 implementation
@@ -755,23 +754,6 @@ end;
 procedure TgsJson_vsoftYaml_TestProject.Setup;
 begin
   ljson := CreateJson('vsoftyaml');
-end;
-
-procedure TgsJson_vsoftYaml_TestProject.Test_RFC8259_NumberInvalid(
-  const aJson: string);
-begin
-  if aJson = '{"v":+1}' then
-  begin
-    Log('DISABLED - VSoft.YAML parser does not terminate when parsing {"v":+1} '
-      + 'in JSON mode. The "+" prefix is NOT a valid number format per RFC 8259 '
-      + 'Section 6. Test disabled due to near-infinite parse time in the YAML '
-      + 'lexer/parser. The parser should reject "+1" but instead enters a very '
-      + 'slow code path (backtracking or retry loop).');
-    Assert.Fail('VSoft.YAML: Leading plus "{"v":+1}" causes parser hang - '
-      + 'RFC 8259 Section 6 violation (not a valid number format)');
-    Exit;
-  end;
-  inherited;
 end;
 
 initialization

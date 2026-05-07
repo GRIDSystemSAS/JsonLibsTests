@@ -1744,6 +1744,7 @@ function StrIComp(Str1, Str2: pointer): PtrInt;
 
 /// faster alternative to StrIComp() = 0
 function StrIEqual(Str1, Str2: pointer): boolean;
+  {$ifndef CPUX86}inline;{$endif}
 
 /// faster alternative to AnsiICompW() = 0
 function StrIEqualW(Str1, Str2: PWord): boolean;
@@ -6978,16 +6979,15 @@ var
   c1, c2: byte; // integer/PtrInt are actually slower on FPC
 begin
   result := PtrInt(PtrUInt(Str2)) - PtrInt(PtrUInt(Str1));
-  if result <> 0 then
-  begin
-    repeat
-      c1 := Up[PByteArray(Str1)[0]];
-      c2 := Up[PByteArray(Str1)[result]];
-      inc(PByte(Str1));
-    until (c1 = 0) or
-          (c1 <> c2);
-    result := c1 - c2;
-  end;
+  if result = 0 then
+    exit;
+  repeat
+    c1 := Up[PByteArray(Str1)[0]];
+    c2 := Up[PByteArray(Str1)[result]];
+    inc(PByte(Str1));
+  until (c1 = 0) or
+        (c1 <> c2);
+  result := c1 - c2;
 end;
 
 function StrICompLNotNil(Str1, Str2: pointer; Up: PNormTableByte; L: PtrInt): PtrInt;
@@ -7062,22 +7062,23 @@ var
 begin
   result := false;
   if Str1 <> Str2 then
-    if Str1 <> nil then
-      if Str2 <> nil then
-      begin
-        {$ifndef CPUX86NOTPIC}
-        table := @NormToUpperAnsi7Byte;
-        {$endif CPUX86NOTPIC}
-        repeat
-          c1 := table[PByte(Str1)^];
-          if c1 <> table[PByte(Str2)^] then
-            exit;
-          if c1 = 0 then
-            break;
-          inc(PByte(Str1));
-          inc(PByte(Str2));
-        until false;
-      end;
+  begin
+    if (Str1 = nil) or
+       (Str2 = nil) then
+      exit;
+    {$ifndef CPUX86NOTPIC}
+    table := @NormToUpperAnsi7Byte;
+    {$endif CPUX86NOTPIC}
+    repeat
+      c1 := table[PByte(Str1)^];
+      if c1 <> table[PByte(Str2)^] then
+        exit;
+      if c1 = 0 then
+        break;
+      inc(PByte(Str1));
+      inc(PByte(Str2));
+    until false;
+  end;
   result := true;
 end;
 
@@ -7092,26 +7093,27 @@ var
 begin
   result := false;
   if Str1 <> Str2 then
-    if Str1 <> nil then
-      if Str2 <> nil then
-      begin
-        {$ifndef CPUX86NOTPIC}
-        table := @NormToUpperAnsi7Byte;
-        {$endif CPUX86NOTPIC}
-        repeat
-          c1 := Str1^;
-          c2 := Str2^;
-          if c1 <> c2 then
-            if (c1 > 255) or
-               (c2 > 255) or
-               (table[c1] <> table[c2]) then
-              exit;
-          if c1 = 0 then
-            break;
-          inc(Str1);
-          inc(Str2);
-        until false;
-      end;
+  begin
+    if (Str1 = nil) or
+       (Str2 = nil) then
+      exit;
+    {$ifndef CPUX86NOTPIC}
+    table := @NormToUpperAnsi7Byte;
+    {$endif CPUX86NOTPIC}
+    repeat
+      c1 := Str1^;
+      c2 := Str2^;
+      if c1 <> c2 then
+        if (c1 > 255) or
+           (c2 > 255) or
+           (table[c1] <> table[c2]) then
+          exit;
+      if c1 = 0 then
+        break;
+      inc(Str1);
+      inc(Str2);
+    until false;
+  end;
   result := true;
 end;
 
